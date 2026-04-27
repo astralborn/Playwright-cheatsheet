@@ -269,18 +269,19 @@
 
 <nav>
   <button class="active" onclick="show('setup',this)">Setup</button>
+  <button onclick="show('example',this)">Full Example</button>
   <button onclick="show('locators',this)">Locators</button>
   <button onclick="show('actions',this)">Actions</button>
-  <button onclick="show('dragdrop',this)">Drag &amp; Drop</button>
-  <button onclick="show('screenshots',this)">Screenshots</button>
   <button onclick="show('assertions',this)">Assertions</button>
   <button onclick="show('navigation',this)">Navigation</button>
   <button onclick="show('network',this)">Network</button>
+  <button onclick="show('screenshots',this)">Screenshots</button>
+  <button onclick="show('dragdrop',this)">Drag &amp; Drop</button>
   <button onclick="show('config',this)">Config / pytest</button>
   <button onclick="show('cli',this)">CLI</button>
-  <button onclick="show('advanced',this)">Advanced</button>
   <button onclick="show('hooks',this)">Hooks &amp; Events</button>
   <button onclick="show('patterns',this)">Patterns</button>
+  <button onclick="show('advanced',this)">Advanced</button>
 </nav>
 
 <div class="mode-bar">
@@ -402,6 +403,306 @@ page = <span class="kw">await</span> context.<span class="op">new_page</span>()<
     slow_mo=<span class="cn">50</span>,       <span class="cm"># ms delay between actions</span>
     args=[<span class="st">"--no-sandbox"</span>]
 )</div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════════════ FULL EXAMPLE -->
+<div id="example" class="panel">
+  <div class="grid">
+
+    <div class="card">
+      <div class="card-head"><div class="dot g"></div><h3>Project layout</h3></div>
+      <div class="card-body">
+        <div class="snip">my_project/
+├── conftest.py          <span class="cm"># fixtures, auth, browser config</span>
+├── pytest.ini           <span class="cm"># CLI options</span>
+├── auth.json            <span class="cm"># saved login state (gitignored)</span>
+├── .env                 <span class="cm"># secrets (gitignored)</span>
+└── tests/
+    ├── pages/
+    │   ├── login_page.py
+    │   └── dashboard_page.py
+    ├── test_login.py
+    └── test_dashboard.py</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-head"><div class="dot b"></div><h3>pytest.ini</h3></div>
+      <div class="card-body">
+        <div class="snip">[pytest]
+addopts =
+    --browser chromium
+    --headed
+    --screenshot only-on-failure
+    --tracing retain-on-failure
+    --video retain-on-failure
+base_url = http://localhost:3000
+slowmo = 0</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-head"><div class="dot y"></div><h3>conftest.py</h3></div>
+      <div class="card-body">
+        <div class="snip sync-block"><span class="kw">import</span> pytest, os
+<span class="kw">from</span> dotenv <span class="kw">import</span> load_dotenv
+<span class="kw">from</span> playwright.sync_api <span class="kw">import</span> Page, expect
+
+<span class="fn">load_dotenv</span>()
+
+<span class="cm"># ── global expect timeout ──────────────────────────────</span>
+<span class="dk">@pytest.fixture</span>(autouse=<span class="cn">True</span>)
+<span class="kw">def</span> <span class="fn">set_expect_timeout</span>():
+    expect.<span class="op">set_options</span>(timeout=<span class="cn">10_000</span>)
+
+<span class="cm"># ── reuse auth state (login once per session) ──────────</span>
+<span class="dk">@pytest.fixture</span>(scope=<span class="st">"session"</span>)
+<span class="kw">def</span> <span class="fn">auth_state</span>(browser):
+    ctx  = browser.<span class="op">new_context</span>()
+    page = ctx.<span class="op">new_page</span>()
+    page.<span class="op">goto</span>(<span class="st">"/login"</span>)
+    page.<span class="op">get_by_label</span>(<span class="st">"Email"</span>).<span class="op">fill</span>(os.<span class="op">getenv</span>(<span class="st">"TEST_USER"</span>))
+    page.<span class="op">get_by_label</span>(<span class="st">"Password"</span>).<span class="op">fill</span>(os.<span class="op">getenv</span>(<span class="st">"TEST_PASS"</span>))
+    page.<span class="op">get_by_role</span>(<span class="st">"button"</span>, name=<span class="st">"Sign in"</span>).<span class="op">click</span>()
+    ctx.<span class="op">storage_state</span>(path=<span class="st">"auth.json"</span>)
+    ctx.<span class="op">close</span>()
+
+<span class="dk">@pytest.fixture</span>
+<span class="kw">def</span> <span class="fn">auth_page</span>(browser, auth_state) -> Page:
+    ctx  = browser.<span class="op">new_context</span>(
+        storage_state=<span class="st">"auth.json"</span>,
+        viewport={<span class="st">"width"</span>: <span class="cn">1280</span>, <span class="st">"height"</span>: <span class="cn">720</span>},
+    )
+    page = ctx.<span class="op">new_page</span>()
+    <span class="kw">yield</span> page
+    ctx.<span class="op">close</span>()</div>
+        <div class="snip async-block"><span class="kw">import</span> pytest, os
+<span class="kw">from</span> dotenv <span class="kw">import</span> load_dotenv
+<span class="kw">from</span> playwright.async_api <span class="kw">import</span> Page, expect
+
+<span class="fn">load_dotenv</span>()
+
+<span class="dk">@pytest.fixture</span>(autouse=<span class="cn">True</span>)
+<span class="kw">def</span> <span class="fn">set_expect_timeout</span>():
+    expect.<span class="op">set_options</span>(timeout=<span class="cn">10_000</span>)
+
+<span class="dk">@pytest.fixture</span>(scope=<span class="st">"session"</span>)
+<span class="kw">async def</span> <span class="fn">auth_state</span>(browser):
+    ctx  = <span class="kw">await</span> browser.<span class="op">new_context</span>()
+    page = <span class="kw">await</span> ctx.<span class="op">new_page</span>()
+    <span class="kw">await</span> page.<span class="op">goto</span>(<span class="st">"/login"</span>)
+    <span class="kw">await</span> page.<span class="op">get_by_label</span>(<span class="st">"Email"</span>).<span class="op">fill</span>(os.<span class="op">getenv</span>(<span class="st">"TEST_USER"</span>))
+    <span class="kw">await</span> page.<span class="op">get_by_label</span>(<span class="st">"Password"</span>).<span class="op">fill</span>(os.<span class="op">getenv</span>(<span class="st">"TEST_PASS"</span>))
+    <span class="kw">await</span> page.<span class="op">get_by_role</span>(<span class="st">"button"</span>, name=<span class="st">"Sign in"</span>).<span class="op">click</span>()
+    <span class="kw">await</span> ctx.<span class="op">storage_state</span>(path=<span class="st">"auth.json"</span>)
+    <span class="kw">await</span> ctx.<span class="op">close</span>()
+
+<span class="dk">@pytest.fixture</span>
+<span class="kw">async def</span> <span class="fn">auth_page</span>(browser, auth_state) -> Page:
+    ctx  = <span class="kw">await</span> browser.<span class="op">new_context</span>(storage_state=<span class="st">"auth.json"</span>)
+    page = <span class="kw">await</span> ctx.<span class="op">new_page</span>()
+    <span class="kw">yield</span> page
+    <span class="kw">await</span> ctx.<span class="op">close</span>()</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-head"><div class="dot p"></div><h3>Page Object Model — pages/login_page.py</h3></div>
+      <div class="card-body">
+        <div class="snip sync-block"><span class="kw">from</span> playwright.sync_api <span class="kw">import</span> Page, expect
+
+<span class="kw">class</span> LoginPage:
+    <span class="kw">def</span> <span class="fn">__init__</span>(self, page: Page):
+        self.page     = page
+        self.email    = page.<span class="op">get_by_test_id</span>(<span class="st">"email-input"</span>)
+        self.password = page.<span class="op">get_by_test_id</span>(<span class="st">"password-input"</span>)
+        self.submit   = page.<span class="op">get_by_role</span>(<span class="st">"button"</span>, name=<span class="st">"Sign in"</span>)
+        self.error    = page.<span class="op">get_by_test_id</span>(<span class="st">"login-error"</span>)
+
+    <span class="kw">def</span> <span class="fn">goto</span>(self):
+        self.page.<span class="op">goto</span>(<span class="st">"/login"</span>)
+
+    <span class="kw">def</span> <span class="fn">login</span>(self, email: <span class="fn">str</span>, password: <span class="fn">str</span>):
+        self.email.<span class="op">fill</span>(email)
+        self.password.<span class="op">fill</span>(password)
+        self.submit.<span class="op">click</span>()
+
+    <span class="kw">def</span> <span class="fn">expect_error</span>(self, text: <span class="fn">str</span>):
+        <span class="fn">expect</span>(self.error).<span class="op">to_be_visible</span>()
+        <span class="fn">expect</span>(self.error).<span class="op">to_contain_text</span>(text)</div>
+        <div class="snip async-block"><span class="kw">from</span> playwright.async_api <span class="kw">import</span> Page, expect
+
+<span class="kw">class</span> LoginPage:
+    <span class="kw">def</span> <span class="fn">__init__</span>(self, page: Page):
+        self.page     = page
+        self.email    = page.<span class="op">get_by_test_id</span>(<span class="st">"email-input"</span>)
+        self.password = page.<span class="op">get_by_test_id</span>(<span class="st">"password-input"</span>)
+        self.submit   = page.<span class="op">get_by_role</span>(<span class="st">"button"</span>, name=<span class="st">"Sign in"</span>)
+        self.error    = page.<span class="op">get_by_test_id</span>(<span class="st">"login-error"</span>)
+
+    <span class="kw">async def</span> <span class="fn">goto</span>(self):
+        <span class="kw">await</span> self.page.<span class="op">goto</span>(<span class="st">"/login"</span>)
+
+    <span class="kw">async def</span> <span class="fn">login</span>(self, email: <span class="fn">str</span>, password: <span class="fn">str</span>):
+        <span class="kw">await</span> self.email.<span class="op">fill</span>(email)
+        <span class="kw">await</span> self.password.<span class="op">fill</span>(password)
+        <span class="kw">await</span> self.submit.<span class="op">click</span>()
+
+    <span class="kw">async def</span> <span class="fn">expect_error</span>(self, text: <span class="fn">str</span>):
+        <span class="kw">await</span> <span class="fn">expect</span>(self.error).<span class="op">to_be_visible</span>()
+        <span class="kw">await</span> <span class="fn">expect</span>(self.error).<span class="op">to_contain_text</span>(text)</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-head"><div class="dot c"></div><h3>tests/test_login.py — full login test</h3></div>
+      <div class="card-body">
+        <div class="snip sync-block"><span class="kw">import</span> pytest
+<span class="kw">from</span> playwright.sync_api <span class="kw">import</span> Page, expect
+<span class="kw">from</span> tests.pages.login_page <span class="kw">import</span> LoginPage
+
+<span class="dk">@pytest.fixture</span>
+<span class="kw">def</span> <span class="fn">login</span>(page: Page) -> LoginPage:
+    lp = LoginPage(page)
+    lp.<span class="op">goto</span>()
+    <span class="kw">return</span> lp
+
+<span class="cm"># ── happy path ────────────────────────────────────────</span>
+<span class="kw">def</span> <span class="fn">test_valid_login_redirects_to_dashboard</span>(login: LoginPage):
+    login.<span class="op">login</span>(<span class="st">"admin@example.com"</span>, <span class="st">"correct-password"</span>)
+    <span class="fn">expect</span>(login.page).<span class="op">to_have_url</span>(<span class="st">"/dashboard"</span>)
+    <span class="fn">expect</span>(login.page.<span class="op">get_by_test_id</span>(<span class="st">"user-menu"</span>)).<span class="op">to_be_visible</span>()
+
+<span class="cm"># ── sad path ──────────────────────────────────────────</span>
+<span class="kw">def</span> <span class="fn">test_invalid_password_shows_error</span>(login: LoginPage):
+    login.<span class="op">login</span>(<span class="st">"admin@example.com"</span>, <span class="st">"wrong"</span>)
+    login.<span class="op">expect_error</span>(<span class="st">"Invalid credentials"</span>)
+    <span class="cm"># URL stays on /login</span>
+    <span class="fn">expect</span>(login.page).<span class="op">to_have_url</span>(<span class="st">"/login"</span>)
+
+<span class="cm"># ── network mock: simulate server error ───────────────</span>
+<span class="kw">def</span> <span class="fn">test_server_error_shows_banner</span>(page: Page):
+    page.<span class="op">route</span>(<span class="st">"**/api/login"</span>, <span class="kw">lambda</span> r: r.<span class="op">fulfill</span>(status=<span class="cn">500</span>))
+    lp = LoginPage(page)
+    lp.<span class="op">goto</span>()
+    lp.<span class="op">login</span>(<span class="st">"any@x.com"</span>, <span class="st">"any"</span>)
+    <span class="fn">expect</span>(page.<span class="op">get_by_test_id</span>(<span class="st">"error-banner"</span>)).<span class="op">to_be_visible</span>()
+
+<span class="cm"># ── parametrize multiple invalid inputs ───────────────</span>
+<span class="dk">@pytest.mark.parametrize</span>(<span class="st">"email,pwd"</span>, [
+    (<span class="st">""</span>,              <span class="st">"pass"</span>),
+    (<span class="st">"notanemail"</span>,   <span class="st">"pass"</span>),
+    (<span class="st">"a@b.com"</span>,      <span class="st">""</span>),
+])
+<span class="kw">def</span> <span class="fn">test_validation_errors</span>(login: LoginPage, email: <span class="fn">str</span>, pwd: <span class="fn">str</span>):
+    login.<span class="op">login</span>(email, pwd)
+    <span class="fn">expect</span>(login.page).<span class="op">not_</span>.<span class="op">to_have_url</span>(<span class="st">"/dashboard"</span>)</div>
+        <div class="snip async-block"><span class="kw">import</span> pytest
+<span class="kw">from</span> playwright.async_api <span class="kw">import</span> Page, expect
+<span class="kw">from</span> tests.pages.login_page <span class="kw">import</span> LoginPage
+
+<span class="dk">@pytest.fixture</span>
+<span class="kw">async def</span> <span class="fn">login</span>(page: Page) -> LoginPage:
+    lp = LoginPage(page)
+    <span class="kw">await</span> lp.<span class="op">goto</span>()
+    <span class="kw">return</span> lp
+
+<span class="kw">async def</span> <span class="fn">test_valid_login</span>(login: LoginPage):
+    <span class="kw">await</span> login.<span class="op">login</span>(<span class="st">"admin@example.com"</span>, <span class="st">"correct-password"</span>)
+    <span class="kw">await</span> <span class="fn">expect</span>(login.page).<span class="op">to_have_url</span>(<span class="st">"/dashboard"</span>)
+
+<span class="kw">async def</span> <span class="fn">test_invalid_password</span>(login: LoginPage):
+    <span class="kw">await</span> login.<span class="op">login</span>(<span class="st">"admin@example.com"</span>, <span class="st">"wrong"</span>)
+    <span class="kw">await</span> login.<span class="op">expect_error</span>(<span class="st">"Invalid credentials"</span>)
+
+<span class="kw">async def</span> <span class="fn">test_server_error</span>(page: Page):
+    <span class="kw">await</span> page.<span class="op">route</span>(<span class="st">"**/api/login"</span>, <span class="kw">lambda</span> r: r.<span class="op">fulfill</span>(status=<span class="cn">500</span>))
+    lp = LoginPage(page)
+    <span class="kw">await</span> lp.<span class="op">goto</span>()
+    <span class="kw">await</span> lp.<span class="op">login</span>(<span class="st">"a@x.com"</span>, <span class="st">"p"</span>)
+    <span class="kw">await</span> <span class="fn">expect</span>(page.<span class="op">get_by_test_id</span>(<span class="st">"error-banner"</span>)).<span class="op">to_be_visible</span>()</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-head"><div class="dot r"></div><h3>tests/test_dashboard.py — API setup + UI verify</h3></div>
+      <div class="card-body">
+        <div class="snip sync-block"><span class="kw">import</span> pytest
+<span class="kw">from</span> playwright.sync_api <span class="kw">import</span> Page, expect
+
+<span class="cm"># auth_page fixture from conftest.py provides pre-logged-in page</span>
+<span class="kw">def</span> <span class="fn">test_dashboard_shows_user_name</span>(auth_page: Page):
+    auth_page.<span class="op">goto</span>(<span class="st">"/dashboard"</span>)
+    <span class="fn">expect</span>(auth_page.<span class="op">get_by_test_id</span>(<span class="st">"user-greeting"</span>)).<span class="op">to_contain_text</span>(<span class="st">"Hello"</span>)
+
+<span class="kw">def</span> <span class="fn">test_create_item_via_api_visible_in_ui</span>(auth_page: Page):
+    <span class="cm"># 1. Create via API (fast — no UI interaction)</span>
+    resp = auth_page.request.<span class="op">post</span>(<span class="st">"/api/items"</span>, data={<span class="st">"name"</span>: <span class="st">"My Item"</span>})
+    <span class="fn">expect</span>(resp).<span class="op">to_be_ok</span>()
+    item_id = resp.<span class="op">json</span>()[<span class="st">"id"</span>]
+
+    <span class="cm"># 2. Verify in UI</span>
+    auth_page.<span class="op">goto</span>(<span class="st">"/dashboard"</span>)
+    <span class="fn">expect</span>(
+        auth_page.<span class="op">get_by_test_id</span>(<span class="st">"item-list"</span>)
+               .<span class="op">get_by_test_id</span>(<span class="st">f"item-{item_id}"</span>)
+    ).<span class="op">to_be_visible</span>()
+
+<span class="kw">def</span> <span class="fn">test_delete_item_disappears</span>(auth_page: Page):
+    <span class="cm"># setup via API</span>
+    item_id = auth_page.request.<span class="op">post</span>(
+        <span class="st">"/api/items"</span>, data={<span class="st">"name"</span>: <span class="st">"To Delete"</span>}
+    ).<span class="op">json</span>()[<span class="st">"id"</span>]
+
+    auth_page.<span class="op">goto</span>(<span class="st">"/dashboard"</span>)
+    row = auth_page.<span class="op">get_by_test_id</span>(<span class="st">f"item-{item_id}"</span>)
+    row.<span class="op">get_by_role</span>(<span class="st">"button"</span>, name=<span class="st">"Delete"</span>).<span class="op">click</span>()
+
+    <span class="cm"># confirm dialog</span>
+    auth_page.<span class="op">once</span>(<span class="st">"dialog"</span>, <span class="kw">lambda</span> d: d.<span class="op">accept</span>())
+
+    <span class="fn">expect</span>(row).<span class="op">not_</span>.<span class="op">to_be_attached</span>()
+
+<span class="kw">def</span> <span class="fn">test_export_csv_downloads</span>(auth_page: Page):
+    auth_page.<span class="op">goto</span>(<span class="st">"/dashboard"</span>)
+    <span class="kw">with</span> auth_page.<span class="op">expect_download</span>() <span class="kw">as</span> dl:
+        auth_page.<span class="op">get_by_role</span>(<span class="st">"button"</span>, name=<span class="st">"Export CSV"</span>).<span class="op">click</span>()
+    download = dl.<span class="op">value</span>
+    <span class="kw">assert</span> download.<span class="op">suggested_filename</span>.<span class="op">endswith</span>(<span class="st">".csv"</span>)</div>
+        <div class="snip async-block"><span class="kw">from</span> playwright.async_api <span class="kw">import</span> Page, expect
+
+<span class="kw">async def</span> <span class="fn">test_dashboard_shows_user_name</span>(auth_page: Page):
+    <span class="kw">await</span> auth_page.<span class="op">goto</span>(<span class="st">"/dashboard"</span>)
+    <span class="kw">await</span> <span class="fn">expect</span>(auth_page.<span class="op">get_by_test_id</span>(<span class="st">"user-greeting"</span>)).<span class="op">to_contain_text</span>(<span class="st">"Hello"</span>)
+
+<span class="kw">async def</span> <span class="fn">test_create_item_visible_in_ui</span>(auth_page: Page):
+    resp = <span class="kw">await</span> auth_page.request.<span class="op">post</span>(<span class="st">"/api/items"</span>, data={<span class="st">"name"</span>: <span class="st">"My Item"</span>})
+    <span class="kw">await</span> <span class="fn">expect</span>(resp).<span class="op">to_be_ok</span>()
+    item_id = (<span class="kw">await</span> resp.<span class="op">json</span>())[<span class="st">"id"</span>]
+    <span class="kw">await</span> auth_page.<span class="op">goto</span>(<span class="st">"/dashboard"</span>)
+    <span class="kw">await</span> <span class="fn">expect</span>(
+        auth_page.<span class="op">get_by_test_id</span>(<span class="st">f"item-{item_id}"</span>)
+    ).<span class="op">to_be_visible</span>()</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-head"><div class="dot g"></div><h3>End-to-end flow at a glance</h3></div>
+      <div class="card-body">
+        <table>
+          <tr><th>Step</th><th>What happens</th><th>Key API</th></tr>
+          <tr><td>1. Auth (session)</td><td>Login once, save cookies</td><td><code>context.storage_state()</code></td></tr>
+          <tr><td>2. Setup state</td><td>Create test data via API</td><td><code>page.request.post()</code></td></tr>
+          <tr><td>3. Navigate</td><td>Go to the relevant page</td><td><code>page.goto("/path")</code></td></tr>
+          <tr><td>4. Act</td><td>Click, fill, select</td><td><code>locator.click()</code> / <code>.fill()</code></td></tr>
+          <tr><td>5. Assert</td><td>Verify visible state</td><td><code>expect(loc).to_be_visible()</code></td></tr>
+          <tr><td>6. Teardown</td><td>Delete data via API</td><td><code>page.request.delete()</code></td></tr>
+        </table>
+        <div class="tip" style="margin-top:10px"><strong>Golden rule:</strong> Set up &amp; tear down state via API — not via the UI. UI login for every test is 5–10× slower and a common source of flakiness.</div>
       </div>
     </div>
 
