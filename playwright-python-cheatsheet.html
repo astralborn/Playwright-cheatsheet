@@ -32,7 +32,7 @@
     background: var(--bg);
     color: var(--text);
     padding: 2rem 1.5rem 5rem;
-    max-width: 1180px;
+    max-width: 920px;
     margin: 0 auto;
     line-height: 1.6;
   }
@@ -146,8 +146,8 @@
   .async-block, .sync-block { display: block; }
 
   /* ── GRID ────────────────────────────── */
-  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(310px, 1fr)); gap: 1rem; }
-  .grid-wide { grid-template-columns: repeat(auto-fill, minmax(480px, 1fr)); }
+  .grid { display: flex; flex-direction: column; gap: 1.2rem; max-width: 860px; }
+  .grid-wide { }
 
   /* ── CARD ────────────────────────────── */
   .card { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
@@ -159,9 +159,9 @@
   }
   .card-head h3 {
     font-family: var(--display);
-    font-size: 0.74rem;
-    font-weight: 500;
-    letter-spacing: 0.09em;
+    font-size: 0.82rem;
+    font-weight: 600;
+    letter-spacing: 0.06em;
     text-transform: uppercase;
     color: var(--muted);
   }
@@ -173,16 +173,16 @@
   .p  { background: var(--purple); }
   .c  { background: var(--cyan);   }
 
-  .card-body { padding: 12px 14px; }
+  .card-body { padding: 14px 18px; }
 
   /* ── CODE SNIPPET ────────────────────── */
   .snip {
     background: #00000040;
     border: 1px solid #ffffff09;
     border-radius: 6px;
-    padding: 9px 12px;
-    font-size: 0.69rem;
-    line-height: 1.75;
+    padding: 12px 16px;
+    font-size: 0.75rem;
+    line-height: 1.8;
     white-space: pre;
     overflow-x: auto;
     color: var(--text);
@@ -199,7 +199,7 @@
   .dk { color: var(--green);  }   /* decorator*/
 
   /* ── TABLE ───────────────────────────── */
-  table { width: 100%; border-collapse: collapse; font-size: 0.70rem; }
+  table { width: 100%; border-collapse: collapse; font-size: 0.75rem; }
   th {
     text-align: left; padding: 6px 10px;
     background: var(--surface2); color: var(--muted);
@@ -224,7 +224,7 @@
   .section-label:first-child { margin-top: 0; }
 
   .tip {
-    font-size: 0.68rem;
+    font-size: 0.74rem;
     color: var(--muted);
     border-left: 2px solid var(--cyan);
     padding: 4px 0 4px 10px;
@@ -234,7 +234,7 @@
   .tip strong { color: var(--cyan); }
 
   .warn {
-    font-size: 0.68rem;
+    font-size: 0.74rem;
     color: var(--muted);
     border-left: 2px solid var(--yellow);
     padding: 4px 0 4px 10px;
