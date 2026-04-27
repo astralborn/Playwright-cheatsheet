@@ -8,15 +8,14 @@ For async add `await` before every call and use `async_playwright` / `async with
 
 ## Contents
 
-| | |
-|--|--|
-| [Setup](#setup) | [Navigation & Waiting](#navigation--waiting) |
-| [Locators](#locators) | [Network](#network) |
-| [Actions](#actions) | [Screenshots & Tracing](#screenshots--tracing) |
-| [Assertions](#assertions) | [Config & pytest](#config--pytest) |
-| [Quick Test Example](#quick-test-example) | [CLI](#cli) |
-| [Page Object Model](#page-object-model) | [Key Patterns](#key-patterns) |
-| [Best Practices](#best-practices) | |
+**Basics**
+[Setup](#setup) · [Locators](#locators) · [Actions](#actions) · [Assertions](#assertions)
+
+**Testing**
+[Navigation & Waiting](#navigation--waiting) · [Network](#network) · [Screenshots & Tracing](#screenshots--tracing) · [Config & pytest](#config--pytest) · [CLI](#cli)
+
+**Patterns & Examples**
+[Quick Test Example](#quick-test-example) · [Page Object Model](#page-object-model) · [Key Patterns](#key-patterns) · [Best Practices](#best-practices)
 
 ---
 
