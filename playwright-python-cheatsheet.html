@@ -279,6 +279,8 @@
   <button onclick="show('config',this)">Config / pytest</button>
   <button onclick="show('cli',this)">CLI</button>
   <button onclick="show('advanced',this)">Advanced</button>
+  <button onclick="show('hooks',this)">Hooks &amp; Events</button>
+  <button onclick="show('patterns',this)">Patterns</button>
 </nav>
 
 <!-- ════════════════════════════════════════════════════ SETUP -->
@@ -418,13 +420,9 @@ page = <span class="kw">await</span> context.<span class="op">new_page</span>()<
           <tr><th>Priority</th><th>Method</th><th>Use when</th></tr>
           <tr><td><span class="pill pill-g">1st</span></td><td><code>get_by_test_id("submit-btn")</code></td><td>Dedicated <code>data-testid</code> attr — most stable</td></tr>
           <tr><td><span class="pill pill-b">2nd</span></td><td><code>get_by_role("button", name="OK")</code></td><td>ARIA role + name — mirrors user perception</td></tr>
-          <tr><td><span class="pill pill-b">2nd</span></td><td><code>get_by_label("Email")</code></td><td>Form fields with <code>&lt;label&gt;</code></td></tr>
-          <tr><td><span class="pill pill-y">3rd</span></td><td><code>get_by_placeholder("Search")</code></td><td>Input placeholder text</td></tr>
-          <tr><td><span class="pill pill-y">3rd</span></td><td><code>get_by_text("Submit")</code></td><td>Visible text content</td></tr>
-          <tr><td><span class="pill pill-y">3rd</span></td><td><code>get_by_alt_text("Logo")</code></td><td>Images by alt attribute</td></tr>
-          <tr><td><span class="pill pill-y">3rd</span></td><td><code>get_by_title("Close")</code></td><td>Title attribute</td></tr>
+          <tr><td><span class="pill pill-y">3rd</span></td><td><code>get_by_label("Email")</code></td><td>Form fields with a <code>&lt;label&gt;</code></td></tr>
         </table>
-        <div class="tip" style="margin-top:8px"><strong>Avoid</strong> CSS selectors, XPath, and <code>.nth()</code> as primary locators — they break on DOM changes. Use them only as a last resort.</div>
+        <div class="tip" style="margin-top:8px"><strong>Others:</strong> <code>get_by_text()</code>, <code>get_by_placeholder()</code>, <code>get_by_alt_text()</code>, <code>get_by_title()</code> — use when test IDs / roles are unavailable. <strong>Avoid</strong> CSS classes and XPath as primary locators.</div>
       </div>
     </div>
 
@@ -1720,6 +1718,343 @@ threads = [Thread(target=<span class="fn">run_in_thread</span>, args=(u,))
           <tr><td>Parallelism</td><td><code>pytest -n 4</code> or <code>asyncio.gather()</code></td><td>Shared browser across threads</td></tr>
           <tr><td>Debugging</td><td><code>PWDEBUG=1</code>, <code>page.pause()</code>, traces</td><td>Print statements, manual steps</td></tr>
         </table>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════════════ HOOKS & EVENTS -->
+<div id="hooks" class="panel">
+  <div class="grid">
+
+    <div class="card">
+      <div class="card-head"><div class="dot b"></div><h3>Page events reference</h3></div>
+      <div class="card-body">
+        <table>
+          <tr><th>Event</th><th>Fires when</th></tr>
+          <tr><td><code>"console"</code></td><td>Any console.log/warn/error in the page</td></tr>
+          <tr><td><code>"pageerror"</code></td><td>Uncaught JS exception</td></tr>
+          <tr><td><code>"request"</code></td><td>Network request is issued</td></tr>
+          <tr><td><code>"response"</code></td><td>Network response received</td></tr>
+          <tr><td><code>"requestfailed"</code></td><td>Request fails (net error, abort)</td></tr>
+          <tr><td><code>"dialog"</code></td><td>alert / confirm / prompt / beforeunload</td></tr>
+          <tr><td><code>"popup"</code></td><td>A new window/tab opens</td></tr>
+          <tr><td><code>"download"</code></td><td>Download starts</td></tr>
+          <tr><td><code>"filechooser"</code></td><td>File-picker dialog opens</td></tr>
+          <tr><td><code>"close"</code></td><td>Page closes</td></tr>
+          <tr><td><code>"crash"</code></td><td>Page process crashes</td></tr>
+          <tr><td><code>"framenavigated"</code></td><td>Any frame navigates to a new URL</td></tr>
+          <tr><td><code>"websocket"</code></td><td>WebSocket is opened</td></tr>
+          <tr><td><code>"worker"</code></td><td>Service/web worker is created</td></tr>
+        </table>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-head"><div class="dot g"></div><h3>Listening to events</h3></div>
+      <div class="card-body">
+        <div class="snip sync-block"><span class="cm"># one-shot listener (fires once, then removed)</span>
+page.<span class="op">once</span>(<span class="st">"dialog"</span>, <span class="kw">lambda</span> d: d.<span class="op">accept</span>())
+
+<span class="cm"># persistent listener</span>
+page.<span class="op">on</span>(<span class="st">"console"</span>, <span class="kw">lambda</span> msg: <span class="fn">print</span>(msg.<span class="op">type</span>, msg.<span class="op">text</span>))
+
+<span class="cm"># remove a listener</span>
+<span class="kw">def</span> <span class="fn">handler</span>(msg): <span class="fn">print</span>(msg)
+page.<span class="op">on</span>(<span class="st">"console"</span>, <span class="fn">handler</span>)
+page.<span class="op">remove_listener</span>(<span class="st">"console"</span>, <span class="fn">handler</span>)
+
+<span class="cm"># request / response inspection</span>
+page.<span class="op">on</span>(<span class="st">"request"</span>,  <span class="kw">lambda</span> req:  <span class="fn">print</span>(req.<span class="op">method</span>, req.<span class="op">url</span>))
+page.<span class="op">on</span>(<span class="st">"response"</span>, <span class="kw">lambda</span> resp: <span class="fn">print</span>(resp.<span class="op">status</span>, resp.<span class="op">url</span>))
+
+<span class="cm"># failed requests</span>
+page.<span class="op">on</span>(<span class="st">"requestfailed"</span>,
+    <span class="kw">lambda</span> req: <span class="fn">print</span>(req.<span class="op">failure</span>, req.<span class="op">url</span>))</div>
+        <div class="snip async-block">page.<span class="op">once</span>(<span class="st">"dialog"</span>, <span class="kw">lambda</span> d: d.<span class="op">accept</span>())
+page.<span class="op">on</span>(<span class="st">"console"</span>, <span class="kw">lambda</span> msg: <span class="fn">print</span>(msg.<span class="op">text</span>))
+page.<span class="op">on</span>(<span class="st">"response"</span>, <span class="kw">lambda</span> r: <span class="fn">print</span>(r.<span class="op">status</span>, r.<span class="op">url</span>))</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-head"><div class="dot y"></div><h3>Context-level events</h3></div>
+      <div class="card-body">
+        <div class="snip sync-block"><span class="cm"># new page opened in this context</span>
+context.<span class="op">on</span>(<span class="st">"page"</span>, <span class="kw">lambda</span> page: <span class="fn">print</span>(<span class="st">"new page:"</span>, page.<span class="op">url</span>))
+
+<span class="cm"># service worker registered</span>
+context.<span class="op">on</span>(<span class="st">"serviceworker"</span>, <span class="kw">lambda</span> sw: <span class="fn">print</span>(sw.<span class="op">url</span>))
+
+<span class="cm"># request/response at context level (all pages)</span>
+context.<span class="op">on</span>(<span class="st">"request"</span>,  <span class="kw">lambda</span> req: ...)
+context.<span class="op">on</span>(<span class="st">"response"</span>, <span class="kw">lambda</span> r:   ...)</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-head"><div class="dot p"></div><h3>WebSocket &amp; worker events</h3></div>
+      <div class="card-body">
+        <div class="snip sync-block"><span class="cm"># intercept WebSocket frames</span>
+<span class="kw">def</span> <span class="fn">on_ws</span>(ws):
+    <span class="fn">print</span>(<span class="st">"WS opened:"</span>, ws.<span class="op">url</span>)
+    ws.<span class="op">on</span>(<span class="st">"framesent"</span>,     <span class="kw">lambda</span> f: <span class="fn">print</span>(<span class="st">"sent:"</span>,     f.<span class="op">payload</span>))
+    ws.<span class="op">on</span>(<span class="st">"framereceived"</span>, <span class="kw">lambda</span> f: <span class="fn">print</span>(<span class="st">"received:"</span>, f.<span class="op">payload</span>))
+    ws.<span class="op">on</span>(<span class="st">"close"</span>,         <span class="kw">lambda</span> _: <span class="fn">print</span>(<span class="st">"WS closed"</span>))
+
+page.<span class="op">on</span>(<span class="st">"websocket"</span>, <span class="fn">on_ws</span>)
+
+<span class="cm"># web workers</span>
+page.<span class="op">on</span>(<span class="st">"worker"</span>, <span class="kw">lambda</span> w: <span class="fn">print</span>(<span class="st">"worker:"</span>, w.<span class="op">url</span>))
+workers = page.<span class="op">workers</span>  <span class="cm"># list of active workers</span></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-head"><div class="dot c"></div><h3>expect_* context managers (sync)</h3></div>
+      <div class="card-body">
+        <div class="tip"><strong>Use these</strong> to listen for a one-shot event that is triggered by an action you perform inside the <code>with</code> block.</div>
+        <div class="snip sync-block"><span class="cm"># wait for a specific request</span>
+<span class="kw">with</span> page.<span class="op">expect_request</span>(<span class="st">"**/graphql"</span>) <span class="kw">as</span> req_info:
+    page.<span class="op">get_by_role</span>(<span class="st">"button"</span>, name=<span class="st">"Search"</span>).<span class="op">click</span>()
+req = req_info.<span class="op">value</span>
+<span class="fn">print</span>(req.<span class="op">post_data</span>)
+
+<span class="cm"># wait for a response matching a predicate</span>
+<span class="kw">with</span> page.<span class="op">expect_response</span>(
+    <span class="kw">lambda</span> r: r.<span class="op">url</span>.<span class="op">endswith</span>(<span class="st">"/data"</span>) <span class="kw">and</span> r.<span class="op">status</span> == <span class="cn">200</span>
+) <span class="kw">as</span> resp_info:
+    page.<span class="op">reload</span>()
+resp = resp_info.<span class="op">value</span>
+body = resp.<span class="op">json</span>()
+
+<span class="cm"># wait for popup / download / file-chooser</span>
+<span class="kw">with</span> page.<span class="op">expect_popup</span>()       <span class="kw">as</span> popup_info:   ...
+<span class="kw">with</span> page.<span class="op">expect_download</span>()    <span class="kw">as</span> dl_info:      ...
+<span class="kw">with</span> page.<span class="op">expect_file_chooser</span>() <span class="kw">as</span> fc_info:     ...</div>
+        <div class="snip async-block"><span class="kw">async with</span> page.<span class="op">expect_request</span>(<span class="st">"**/graphql"</span>) <span class="kw">as</span> req_info:
+    <span class="kw">await</span> page.<span class="op">get_by_role</span>(<span class="st">"button"</span>, name=<span class="st">"Search"</span>).<span class="op">click</span>()
+req = <span class="kw">await</span> req_info.<span class="op">value</span>
+
+<span class="kw">async with</span> page.<span class="op">expect_response</span>(
+    <span class="kw">lambda</span> r: r.<span class="op">status</span> == <span class="cn">200</span>
+) <span class="kw">as</span> resp_info:
+    <span class="kw">await</span> page.<span class="op">reload</span>()
+resp = <span class="kw">await</span> resp_info.<span class="op">value</span></div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════════════ PATTERNS -->
+<div id="patterns" class="panel">
+  <div class="grid">
+
+    <div class="card">
+      <div class="card-head"><div class="dot g"></div><h3>Common test patterns</h3></div>
+      <div class="card-body">
+        <div class="snip sync-block"><span class="cm"># ── 1. Arrange → Act → Assert ───────────────────────</span>
+<span class="kw">def</span> <span class="fn">test_add_to_cart</span>(page: Page):
+    <span class="cm"># Arrange</span>
+    page.<span class="op">goto</span>(<span class="st">"/shop"</span>)
+    <span class="cm"># Act</span>
+    page.<span class="op">get_by_test_id</span>(<span class="st">"product-card"</span>).<span class="op">first</span>.<span class="op">get_by_role</span>(<span class="st">"button"</span>, name=<span class="st">"Add"</span>).<span class="op">click</span>()
+    <span class="cm"># Assert</span>
+    <span class="fn">expect</span>(page.<span class="op">get_by_test_id</span>(<span class="st">"cart-count"</span>)).<span class="op">to_have_text</span>(<span class="st">"1"</span>)
+
+<span class="cm"># ── 2. Setup via API, assert in UI ─────────────────</span>
+<span class="kw">def</span> <span class="fn">test_order_visible</span>(page: Page):
+    <span class="cm"># create order via API (fast, no UI login needed)</span>
+    resp = page.request.<span class="op">post</span>(<span class="st">"/api/orders"</span>, data={<span class="st">"item"</span>: <span class="st">"A"</span>})
+    order_id = resp.<span class="op">json</span>()[<span class="st">"id"</span>]
+    <span class="cm"># verify in UI</span>
+    page.<span class="op">goto</span>(<span class="st">f"/orders/{order_id}"</span>)
+    <span class="fn">expect</span>(page.<span class="op">get_by_test_id</span>(<span class="st">"order-status"</span>)).<span class="op">to_be_visible</span>()</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-head"><div class="dot b"></div><h3>Waiting patterns (do &amp; don't)</h3></div>
+      <div class="card-body">
+        <table>
+          <tr><th>✓ Do</th><th>✗ Don't</th></tr>
+          <tr><td><code>expect(loc).to_be_visible()</code></td><td><code>time.sleep(2)</code></td></tr>
+          <tr><td><code>locator.wait_for(state="visible")</code></td><td><code>page.wait_for_timeout(2000)</code></td></tr>
+          <tr><td><code>page.wait_for_url("**/dashboard")</code></td><td>hardcoded delays after click</td></tr>
+          <tr><td><code>expect_response()</code> context manager</td><td>polling in a while-loop</td></tr>
+          <tr><td><code>page.wait_for_load_state("networkidle")</code></td><td>assuming navigation is instant</td></tr>
+        </table>
+        <div class="warn" style="margin-top:10px"><strong>Rule:</strong> Every Playwright action already auto-waits for the element to be actionable. Only add explicit waits when you need to sync on a <em>state change</em> after an action.</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-head"><div class="dot y"></div><h3>Handling dynamic / loading UI</h3></div>
+      <div class="card-body">
+        <div class="snip sync-block"><span class="cm"># wait for a spinner to disappear</span>
+page.<span class="op">locator</span>(<span class="st">".spinner"</span>).<span class="op">wait_for</span>(state=<span class="st">"hidden"</span>)
+
+<span class="cm"># wait for skeleton loader to be replaced</span>
+<span class="fn">expect</span>(page.<span class="op">get_by_test_id</span>(<span class="st">"user-name"</span>)).<span class="op">not_</span>.<span class="op">to_be_empty</span>()
+
+<span class="cm"># wait for item count to update</span>
+<span class="fn">expect</span>(page.<span class="op">get_by_test_id</span>(<span class="st">"result-list"</span>)).<span class="op">to_have_count</span>(<span class="cn">5</span>)
+
+<span class="cm"># infinite scroll — scroll and wait for new items</span>
+<span class="kw">for</span> _ <span class="kw">in</span> <span class="fn">range</span>(<span class="cn">3</span>):
+    page.keyboard.<span class="op">press</span>(<span class="st">"End"</span>)
+    page.<span class="op">wait_for_load_state</span>(<span class="st">"networkidle"</span>)</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-head"><div class="dot p"></div><h3>Multi-user / multi-role testing</h3></div>
+      <div class="card-body">
+        <div class="snip sync-block"><span class="cm"># conftest.py — two independent authenticated contexts</span>
+<span class="dk">@pytest.fixture</span>(scope=<span class="st">"session"</span>)
+<span class="kw">def</span> <span class="fn">admin_page</span>(browser):
+    ctx = browser.<span class="op">new_context</span>(storage_state=<span class="st">"admin_auth.json"</span>)
+    page = ctx.<span class="op">new_page</span>()
+    <span class="kw">yield</span> page
+    ctx.<span class="op">close</span>()
+
+<span class="dk">@pytest.fixture</span>(scope=<span class="st">"session"</span>)
+<span class="kw">def</span> <span class="fn">user_page</span>(browser):
+    ctx = browser.<span class="op">new_context</span>(storage_state=<span class="st">"user_auth.json"</span>)
+    page = ctx.<span class="op">new_page</span>()
+    <span class="kw">yield</span> page
+    ctx.<span class="op">close</span>()
+
+<span class="cm"># test using both roles simultaneously</span>
+<span class="kw">def</span> <span class="fn">test_chat</span>(admin_page, user_page):
+    admin_page.<span class="op">get_by_test_id</span>(<span class="st">"message-input"</span>).<span class="op">fill</span>(<span class="st">"Hello"</span>)
+    admin_page.<span class="op">get_by_test_id</span>(<span class="st">"send-btn"</span>).<span class="op">click</span>()
+    <span class="fn">expect</span>(user_page.<span class="op">get_by_test_id</span>(<span class="st">"chat-messages"</span>)).<span class="op">to_contain_text</span>(<span class="st">"Hello"</span>)</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-head"><div class="dot c"></div><h3>Intercepting &amp; stubbing API calls in tests</h3></div>
+      <div class="card-body">
+        <div class="snip sync-block"><span class="kw">import</span> json
+
+<span class="cm"># stub a slow / flaky endpoint</span>
+page.<span class="op">route</span>(<span class="st">"**/api/recommendations"</span>, <span class="kw">lambda</span> route: route.<span class="op">fulfill</span>(
+    status=<span class="cn">200</span>,
+    content_type=<span class="st">"application/json"</span>,
+    body=json.<span class="op">dumps</span>([{<span class="st">"id"</span>: <span class="cn">1</span>, <span class="st">"title"</span>: <span class="st">"Book A"</span>}]),
+))
+
+<span class="cm"># simulate server error</span>
+page.<span class="op">route</span>(<span class="st">"**/api/pay"</span>, <span class="kw">lambda</span> r: r.<span class="op">fulfill</span>(status=<span class="cn">500</span>))
+
+<span class="cm"># block all analytics / tracking</span>
+page.<span class="op">route</span>(<span class="st">"**/(analytics|segment|hotjar)/**"</span>, <span class="kw">lambda</span> r: r.<span class="op">abort</span>())
+
+<span class="cm"># real request but patch JSON response</span>
+<span class="kw">def</span> <span class="fn">patch_flags</span>(route):
+    resp = route.<span class="op">fetch</span>()
+    data = resp.<span class="op">json</span>()
+    data[<span class="st">"featureX"</span>] = <span class="cn">True</span>
+    route.<span class="op">fulfill</span>(response=resp, json=data)
+
+page.<span class="op">route</span>(<span class="st">"**/api/flags"</span>, <span class="fn">patch_flags</span>)</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-head"><div class="dot r"></div><h3>Useful keyboard shortcuts / key names</h3></div>
+      <div class="card-body">
+        <table>
+          <tr><th>Key string</th><th>Notes</th></tr>
+          <tr><td><code>"Enter"</code></td><td>Submit form, confirm</td></tr>
+          <tr><td><code>"Tab"</code></td><td>Move focus to next element</td></tr>
+          <tr><td><code>"Escape"</code></td><td>Close modal / cancel</td></tr>
+          <tr><td><code>"ArrowDown"</code> / <code>"ArrowUp"</code></td><td>Navigate dropdowns / lists</td></tr>
+          <tr><td><code>"Control+a"</code></td><td>Select all</td></tr>
+          <tr><td><code>"Control+c"</code> / <code>"Control+v"</code></td><td>Copy / paste</td></tr>
+          <tr><td><code>"Shift+Tab"</code></td><td>Focus previous element</td></tr>
+          <tr><td><code>"Meta+a"</code></td><td>macOS select-all</td></tr>
+          <tr><td><code>"F5"</code></td><td>Reload page</td></tr>
+          <tr><td><code>"PageDown"</code> / <code>"End"</code></td><td>Scroll / jump to bottom</td></tr>
+        </table>
+        <div class="snip" style="margin-top:8px">page.keyboard.<span class="op">press</span>(<span class="st">"Control+a"</span>)     <span class="cm"># global press</span>
+locator.<span class="op">press</span>(<span class="st">"Enter"</span>)              <span class="cm"># focused on element</span>
+locator.<span class="op">press</span>(<span class="st">"Shift+ArrowRight"</span>)   <span class="cm"># combo</span></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-head"><div class="dot g"></div><h3>Cookie &amp; storage helpers</h3></div>
+      <div class="card-body">
+        <div class="snip sync-block"><span class="cm"># read / write cookies</span>
+cookies = context.<span class="op">cookies</span>()              <span class="cm"># all cookies</span>
+context.<span class="op">add_cookies</span>([{
+    <span class="st">"name"</span>: <span class="st">"session"</span>, <span class="st">"value"</span>: <span class="st">"abc123"</span>,
+    <span class="st">"domain"</span>: <span class="st">"example.com"</span>, <span class="st">"path"</span>: <span class="st">"/"</span>,
+}])
+context.<span class="op">clear_cookies</span>()
+
+<span class="cm"># localStorage / sessionStorage</span>
+page.<span class="op">evaluate</span>(<span class="st">"localStorage.setItem('key','value')"</span>)
+val = page.<span class="op">evaluate</span>(<span class="st">"localStorage.getItem('key')"</span>)
+page.<span class="op">evaluate</span>(<span class="st">"sessionStorage.clear()"</span>)
+
+<span class="cm"># save full browser state (cookies + localStorage)</span>
+context.<span class="op">storage_state</span>(path=<span class="st">"state.json"</span>)
+
+<span class="cm"># load state when creating context</span>
+ctx = browser.<span class="op">new_context</span>(storage_state=<span class="st">"state.json"</span>)</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-head"><div class="dot b"></div><h3>Geolocation &amp; permissions</h3></div>
+      <div class="card-body">
+        <div class="snip sync-block"><span class="cm"># grant geolocation at context creation</span>
+context = browser.<span class="op">new_context</span>(
+    geolocation={<span class="st">"latitude"</span>: <span class="cn">50.08</span>, <span class="st">"longitude"</span>: <span class="cn">14.43</span>},
+    permissions=[<span class="st">"geolocation"</span>],
+)
+
+<span class="cm"># grant / revoke at runtime</span>
+context.<span class="op">grant_permissions</span>([<span class="st">"clipboard-read"</span>, <span class="st">"notifications"</span>])
+context.<span class="op">clear_permissions</span>()
+
+<span class="cm"># update geolocation mid-test</span>
+context.<span class="op">set_geolocation</span>({<span class="st">"latitude"</span>: <span class="cn">48.86</span>, <span class="st">"longitude"</span>: <span class="cn">2.35</span>})
+
+<span class="cm"># set extra HTTP headers (e.g. auth, locale)</span>
+context.<span class="op">set_extra_http_headers</span>({<span class="st">"X-Custom-Token"</span>: <span class="st">"secret"</span>})</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-head"><div class="dot y"></div><h3>Useful page helpers</h3></div>
+      <div class="card-body">
+        <div class="snip sync-block"><span class="cm"># read page metadata</span>
+page.<span class="op">title</span>()
+page.<span class="op">url</span>
+
+<span class="cm"># HTML content</span>
+page.<span class="op">content</span>()            <span class="cm"># full HTML string</span>
+page.<span class="op">locator</span>(<span class="st">"body"</span>).<span class="op">inner_text</span>()  <span class="cm"># visible text</span>
+
+<span class="cm"># viewport</span>
+page.<span class="op">set_viewport_size</span>({<span class="st">"width"</span>: <span class="cn">375</span>, <span class="st">"height"</span>: <span class="cn">667</span>})  <span class="cm"># iPhone</span>
+
+<span class="cm"># emulate media / color scheme</span>
+page.<span class="op">emulate_media</span>(media=<span class="st">"print"</span>)
+page.<span class="op">emulate_media</span>(color_scheme=<span class="st">"dark"</span>)
+
+<span class="cm"># inject CSS or JS into every page load</span>
+context.<span class="op">add_init_script</span>(<span class="st">"window.__TEST__ = true"</span>)
+context.<span class="op">add_init_script</span>(path=<span class="st">"mocks.js"</span>)
+
+<span class="cm"># PDF (Chromium only)</span>
+page.<span class="op">pdf</span>(path=<span class="st">"output.pdf"</span>, format=<span class="st">"A4"</span>)</div>
       </div>
     </div>
 
