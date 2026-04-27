@@ -1,0 +1,1744 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Playwright Python Cheat Sheet</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&family=Syne:wght@400;500;700;800&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg:       #0d1117;
+    --surface:  #161b22;
+    --surface2: #1c2230;
+    --border:   #30363d;
+    --blue:     #79c0ff;
+    --green:    #56d364;
+    --yellow:   #e3b341;
+    --red:      #ff7b72;
+    --purple:   #d2a8ff;
+    --cyan:     #39d5c3;
+    --text:     #e6edf3;
+    --muted:    #8b949e;
+    --hint:     #6e7681;
+    --mono:     'JetBrains Mono', monospace;
+    --display:  'Syne', sans-serif;
+  }
+
+  body {
+    font-family: var(--mono);
+    background: var(--bg);
+    color: var(--text);
+    padding: 2rem 1.5rem 5rem;
+    max-width: 1180px;
+    margin: 0 auto;
+    line-height: 1.6;
+  }
+
+  /* ── HEADER ─────────────────────────── */
+  header {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 1rem;
+    flex-wrap: wrap;
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 1.4rem;
+    margin-bottom: 1.8rem;
+  }
+
+  .logo h1 {
+    font-family: var(--display);
+    font-size: 2.4rem;
+    font-weight: 800;
+    letter-spacing: -0.04em;
+    line-height: 1;
+    color: var(--text);
+  }
+  .logo h1 em { font-style: normal; color: var(--yellow); }
+  .logo h1 sup {
+    font-size: 0.9rem;
+    font-weight: 400;
+    color: var(--cyan);
+    vertical-align: super;
+    margin-left: 4px;
+  }
+  .logo p {
+    font-size: 0.72rem;
+    color: var(--muted);
+    margin-top: 5px;
+  }
+  .badges { display: flex; gap: 6px; flex-wrap: wrap; align-items: flex-end; }
+  .badge {
+    font-size: 0.67rem;
+    padding: 3px 9px;
+    border-radius: 20px;
+    border: 1px solid var(--border);
+    color: var(--muted);
+    background: var(--surface2);
+    white-space: nowrap;
+  }
+  .badge.hi { color: var(--cyan); border-color: #1d4a47; background: #0d2623; }
+  .badge.ab { color: var(--purple); border-color: #3a2a5a; background: #1a0d2e; }
+
+  /* ── TABS ────────────────────────────── */
+  nav {
+    display: flex;
+    gap: 2px;
+    flex-wrap: wrap;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 1.8rem;
+  }
+  nav button {
+    font-family: var(--mono);
+    font-size: 0.72rem;
+    padding: 7px 14px;
+    background: transparent;
+    border: none;
+    border-bottom: 2px solid transparent;
+    color: var(--muted);
+    cursor: pointer;
+    transition: color .15s, border-color .15s;
+    margin-bottom: -1px;
+    white-space: nowrap;
+  }
+  nav button:hover { color: var(--text); }
+  nav button.active { color: var(--yellow); border-bottom-color: var(--yellow); }
+
+  /* ── PANELS ──────────────────────────── */
+  .panel { display: none; }
+  .panel.active { display: block; }
+
+  /* ── SYNC/ASYNC TOGGLE ────────────────── */
+  .mode-bar {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 1.4rem;
+    font-size: 0.72rem;
+  }
+  .mode-bar span { color: var(--muted); }
+  .toggle {
+    display: flex;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    overflow: hidden;
+  }
+  .toggle button {
+    font-family: var(--mono);
+    font-size: 0.68rem;
+    padding: 4px 12px;
+    background: transparent;
+    border: none;
+    color: var(--muted);
+    cursor: pointer;
+    transition: background .15s, color .15s;
+  }
+  .toggle button.on { background: var(--surface2); color: var(--yellow); }
+
+  /* hide/show sync vs async blocks */
+  body.async-mode .sync-block  { display: none; }
+  body.async-mode .async-block { display: block; }
+  body.sync-mode  .async-block { display: none; }
+  body.sync-mode  .sync-block  { display: block; }
+  .async-block, .sync-block { display: block; }
+
+  /* ── GRID ────────────────────────────── */
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(310px, 1fr)); gap: 1rem; }
+  .grid-wide { grid-template-columns: repeat(auto-fill, minmax(480px, 1fr)); }
+
+  /* ── CARD ────────────────────────────── */
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
+  .card-head {
+    display: flex; align-items: center; gap: 8px;
+    padding: 9px 14px;
+    background: var(--surface2);
+    border-bottom: 1px solid var(--border);
+  }
+  .card-head h3 {
+    font-family: var(--display);
+    font-size: 0.74rem;
+    font-weight: 500;
+    letter-spacing: 0.09em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+  .dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+  .b  { background: var(--blue);   }
+  .g  { background: var(--green);  }
+  .y  { background: var(--yellow); }
+  .r  { background: var(--red);    }
+  .p  { background: var(--purple); }
+  .c  { background: var(--cyan);   }
+
+  .card-body { padding: 12px 14px; }
+
+  /* ── CODE SNIPPET ────────────────────── */
+  .snip {
+    background: #00000040;
+    border: 1px solid #ffffff09;
+    border-radius: 6px;
+    padding: 9px 12px;
+    font-size: 0.69rem;
+    line-height: 1.75;
+    white-space: pre;
+    overflow-x: auto;
+    color: var(--text);
+    margin: 6px 0;
+    tab-size: 4;
+  }
+  /* syntax colours */
+  .kw { color: var(--red);    }   /* keyword  */
+  .fn { color: var(--purple); }   /* function */
+  .st { color: var(--blue);   }   /* string   */
+  .cm { color: var(--hint);   }   /* comment  */
+  .op { color: var(--yellow); }   /* method   */
+  .cn { color: var(--cyan);   }   /* constant */
+  .dk { color: var(--green);  }   /* decorator*/
+
+  /* ── TABLE ───────────────────────────── */
+  table { width: 100%; border-collapse: collapse; font-size: 0.70rem; }
+  th {
+    text-align: left; padding: 6px 10px;
+    background: var(--surface2); color: var(--muted);
+    font-size: 0.65rem; font-weight: 500;
+    letter-spacing: 0.07em; text-transform: uppercase;
+    border-bottom: 1px solid var(--border);
+  }
+  td { padding: 6px 10px; border-bottom: 1px solid #ffffff06; vertical-align: top; }
+  tr:last-child td { border-bottom: none; }
+  td code { font-family: var(--mono); font-size: 0.67rem; color: var(--blue); background: #00000030; border: 1px solid #ffffff0a; border-radius: 4px; padding: 1px 5px; }
+
+  /* ── MISC ────────────────────────────── */
+  .section-label {
+    font-family: var(--display);
+    font-size: 0.66rem;
+    font-weight: 500;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--hint);
+    margin: 1.6rem 0 0.8rem;
+  }
+  .section-label:first-child { margin-top: 0; }
+
+  .tip {
+    font-size: 0.68rem;
+    color: var(--muted);
+    border-left: 2px solid var(--cyan);
+    padding: 4px 0 4px 10px;
+    margin: 8px 0 4px;
+    line-height: 1.55;
+  }
+  .tip strong { color: var(--cyan); }
+
+  .warn {
+    font-size: 0.68rem;
+    color: var(--muted);
+    border-left: 2px solid var(--yellow);
+    padding: 4px 0 4px 10px;
+    margin: 8px 0 4px;
+    line-height: 1.55;
+  }
+  .warn strong { color: var(--yellow); }
+
+  .pill {
+    display: inline-block; font-size: 0.62rem;
+    padding: 1px 7px; border-radius: 20px; font-weight: 500;
+  }
+  .pill-g { background:#1a3a25; color:var(--green);  border:1px solid #2a5038; }
+  .pill-b { background:#1a2a3a; color:var(--blue);   border:1px solid #2a3a58; }
+  .pill-y { background:#3a2c10; color:var(--yellow); border:1px solid #5a4218; }
+</style>
+</head>
+<body class="sync-mode">
+
+<header>
+  <div class="logo">
+    <h1>Playwright <em>Python</em><sup>cheatsheet</sup></h1>
+    <p>Complete quick-reference · sync &amp; async · playwright.dev/python · <span style="color:var(--purple)">by astralborn</span></p>
+  </div>
+  <div class="badges">
+    <span class="badge hi">Python ≥ 3.8</span>
+    <span class="badge">pip install playwright</span>
+    <span class="badge">playwright install</span>
+    <span class="badge ab">astralborn</span>
+  </div>
+</header>
+
+<nav>
+  <button class="active" onclick="show('setup',this)">Setup</button>
+  <button onclick="show('locators',this)">Locators</button>
+  <button onclick="show('actions',this)">Actions</button>
+  <button onclick="show('dragdrop',this)">Drag &amp; Drop</button>
+  <button onclick="show('screenshots',this)">Screenshots</button>
+  <button onclick="show('assertions',this)">Assertions</button>
+  <button onclick="show('navigation',this)">Navigation</button>
+  <button onclick="show('network',this)">Network</button>
+  <button onclick="show('config',this)">Config / pytest</button>
+  <button onclick="show('cli',this)">CLI</button>
+  <button onclick="show('advanced',this)">Advanced</button>
+</nav>
+
+<!-- ════════════════════════════════════════════════════ SETUP -->
+<div id="setup" class="panel active">
+
+  <div class="mode-bar">
+    <span>API mode:</span>
+    <div class="toggle">
+      <button class="on" id="btn-sync" onclick="setMode('sync')">sync</button>
+      <button id="btn-async" onclick="setMode('async')">async</button>
+    </div>
+    <span style="color:var(--hint);font-size:0.65rem">(toggle affects all code snippets)</span>
+  </div>
+
+  <div class="grid">
+
+    <div class="card">
+      <div class="card-head"><div class="dot g"></div><h3>Install</h3></div>
+      <div class="card-body">
+        <div class="snip"><span class="cm"># install library + browsers</span>
+pip install playwright
+playwright install
+
+<span class="cm"># or via conda</span>
+conda config --add channels conda-forge
+conda install playwright
+playwright install
+
+<span class="cm"># pytest plugin (recommended)</span>
+pip install pytest-playwright</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-head"><div class="dot b"></div><h3>Sync — script / library</h3></div>
+      <div class="card-body">
+        <div class="snip"><span class="kw">from</span> playwright.sync_api <span class="kw">import</span> sync_playwright
+
+<span class="kw">with</span> <span class="fn">sync_playwright</span>() <span class="kw">as</span> p:
+    browser = p.chromium.<span class="op">launch</span>(headless=<span class="cn">True</span>)
+    page = browser.<span class="op">new_page</span>()
+    page.<span class="op">goto</span>(<span class="st">"https://example.com"</span>)
+    <span class="fn">print</span>(page.<span class="op">title</span>())
+    browser.<span class="op">close</span>()</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-head"><div class="dot y"></div><h3>Async — asyncio</h3></div>
+      <div class="card-body">
+        <div class="snip"><span class="kw">import</span> asyncio
+<span class="kw">from</span> playwright.async_api <span class="kw">import</span> async_playwright
+
+<span class="kw">async def</span> <span class="fn">main</span>():
+    <span class="kw">async with</span> <span class="fn">async_playwright</span>() <span class="kw">as</span> p:
+        browser = <span class="kw">await</span> p.chromium.<span class="op">launch</span>()
+        page = <span class="kw">await</span> browser.<span class="op">new_page</span>()
+        <span class="kw">await</span> page.<span class="op">goto</span>(<span class="st">"https://example.com"</span>)
+        <span class="fn">print</span>(<span class="kw">await</span> page.<span class="op">title</span>())
+        <span class="kw">await</span> browser.<span class="op">close</span>()
+
+asyncio.<span class="op">run</span>(<span class="fn">main</span>())</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-head"><div class="dot p"></div><h3>pytest-playwright (recommended)</h3></div>
+      <div class="card-body">
+        <div class="snip"><span class="cm"># tests/test_example.py</span>
+<span class="kw">import</span> re
+<span class="kw">from</span> playwright.sync_api <span class="kw">import</span> Page, expect
+
+<span class="dk">@pytest.fixture</span>
+<span class="kw">def</span> <span class="fn">page</span>(page: Page):        <span class="cm"># override fixture</span>
+    page.<span class="op">goto</span>(<span class="st">"https://example.com"</span>)
+    <span class="kw">yield</span> page
+
+<span class="kw">def</span> <span class="fn">test_title</span>(page: Page):
+    <span class="fn">expect</span>(page).<span class="op">to_have_title</span>(re.<span class="op">compile</span>(<span class="st">"Example"</span>))
+
+<span class="kw">def</span> <span class="fn">test_link</span>(page: Page):
+    page.<span class="op">get_by_role</span>(<span class="st">"link"</span>, name=<span class="st">"More info"</span>).<span class="op">click</span>()
+    <span class="fn">expect</span>(page).<span class="op">to_have_url</span>(re.<span class="op">compile</span>(<span class="st">r"iana\.org"</span>))</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-head"><div class="dot c"></div><h3>Browser contexts</h3></div>
+      <div class="card-body">
+        <div class="snip sync-block"><span class="cm"># fresh isolated context (own cookies/storage)</span>
+context = browser.<span class="op">new_context</span>(
+    storage_state=<span class="st">"auth.json"</span>,  <span class="cm"># reuse auth</span>
+    viewport={<span class="st">"width"</span>: <span class="cn">1280</span>, <span class="st">"height"</span>: <span class="cn">720</span>},
+    locale=<span class="st">"en-US"</span>,
+    timezone_id=<span class="st">"Europe/Prague"</span>,
+)
+page = context.<span class="op">new_page</span>()</div>
+        <div class="snip async-block">context = <span class="kw">await</span> browser.<span class="op">new_context</span>(
+    storage_state=<span class="st">"auth.json"</span>,
+    viewport={<span class="st">"width"</span>: <span class="cn">1280</span>, <span class="st">"height"</span>: <span class="cn">720</span>},
+    locale=<span class="st">"en-US"</span>,
+    timezone_id=<span class="st">"Europe/Prague"</span>,
+)
+page = <span class="kw">await</span> context.<span class="op">new_page</span>()</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-head"><div class="dot r"></div><h3>Choosing a browser</h3></div>
+      <div class="card-body">
+        <table>
+          <tr><th>Browser</th><th>Launch</th></tr>
+          <tr><td>Chromium</td><td><code>p.chromium.launch()</code></td></tr>
+          <tr><td>Firefox</td><td><code>p.firefox.launch()</code></td></tr>
+          <tr><td>WebKit</td><td><code>p.webkit.launch()</code></td></tr>
+        </table>
+        <div class="snip" style="margin-top:8px">browser = p.chromium.<span class="op">launch</span>(
+    headless=<span class="cn">False</span>,   <span class="cm"># show browser UI</span>
+    slow_mo=<span class="cn">50</span>,       <span class="cm"># ms delay between actions</span>
+    args=[<span class="st">"--no-sandbox"</span>]
+)</div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════════════ LOCATORS -->
+<div id="locators" class="panel">
+  <div class="grid">
+
+    <div class="card">
+      <div class="card-head"><div class="dot g"></div><h3>Preferred get_by_* locators</h3></div>
+      <div class="card-body">
+        <div class="tip" style="border-color:var(--purple);margin-bottom:8px"><strong style="color:var(--purple)">★ Best Practice:</strong> Always prefer <code>get_by_test_id()</code> first — it's immune to UI text/structure changes. Add <code>data-testid</code> attributes to your app's elements.</div>
+        <table>
+          <tr><th>Priority</th><th>Method</th><th>Use when</th></tr>
+          <tr><td><span class="pill pill-g">1st</span></td><td><code>get_by_test_id("submit-btn")</code></td><td>Dedicated <code>data-testid</code> attr — most stable</td></tr>
+          <tr><td><span class="pill pill-b">2nd</span></td><td><code>get_by_role("button", name="OK")</code></td><td>ARIA role + name — mirrors user perception</td></tr>
+          <tr><td><span class="pill pill-b">2nd</span></td><td><code>get_by_label("Email")</code></td><td>Form fields with <code>&lt;label&gt;</code></td></tr>
+          <tr><td><span class="pill pill-y">3rd</span></td><td><code>get_by_placeholder("Search")</code></td><td>Input placeholder text</td></tr>
+          <tr><td><span class="pill pill-y">3rd</span></td><td><code>get_by_text("Submit")</code></td><td>Visible text content</td></tr>
+          <tr><td><span class="pill pill-y">3rd</span></td><td><code>get_by_alt_text("Logo")</code></td><td>Images by alt attribute</td></tr>
+          <tr><td><span class="pill pill-y">3rd</span></td><td><code>get_by_title("Close")</code></td><td>Title attribute</td></tr>
+        </table>
+        <div class="tip" style="margin-top:8px"><strong>Avoid</strong> CSS selectors, XPath, and <code>.nth()</code> as primary locators — they break on DOM changes. Use them only as a last resort.</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-head"><div class="dot b"></div><h3>CSS / XPath / text</h3></div>
+      <div class="card-body">
+        <div class="snip">page.<span class="op">locator</span>(<span class="st">".submit-btn"</span>)
+page.<span class="op">locator</span>(<span class="st">'input[type="email"]'</span>)
+page.<span class="op">locator</span>(<span class="st">"#main-nav"</span>)
+page.<span class="op">locator</span>(<span class="st">'xpath=//button[text()="OK"]'</span>)
+page.<span class="op">locator</span>(<span class="st">"text=Sign in"</span>)          <span class="cm"># text pseudo</span>
+
+<span class="cm"># combine: scope inside element</span>
+page.<span class="op">locator</span>(<span class="st">"#nav"</span>).<span class="op">locator</span>(<span class="st">"a"</span>)</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-head"><div class="dot y"></div><h3>Filtering &amp; chaining</h3></div>
+      <div class="card-body">
+        <div class="snip"><span class="cm"># filter by text</span>
+page.<span class="op">get_by_role</span>(<span class="st">"listitem"</span>) \
+    .<span class="op">filter</span>(has_text=<span class="st">"Product 2"</span>) \
+    .<span class="op">get_by_role</span>(<span class="st">"button"</span>).<span class="op">click</span>()
+
+<span class="cm"># filter by nested locator</span>
+page.<span class="op">get_by_role</span>(<span class="st">"listitem"</span>).<span class="op">filter</span>(
+    has=page.<span class="op">get_by_role</span>(<span class="st">"heading"</span>, name=<span class="st">"Product 2"</span>)
+)
+
+<span class="cm"># match both role and title</span>
+page.<span class="op">get_by_role</span>(<span class="st">"button"</span>) \
+    .<span class="op">and_</span>(page.<span class="op">get_by_title</span>(<span class="st">"Subscribe"</span>))</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-head"><div class="dot p"></div><h3>Lists &amp; nth</h3></div>
+      <div class="card-body">
+        <div class="snip sync-block">locator.<span class="op">first</span>           <span class="cm"># first match (property)</span>
+locator.<span class="op">last</span>            <span class="cm"># last match (property)</span>
+locator.<span class="op">nth</span>(<span class="cn">2</span>)          <span class="cm"># zero-indexed</span>
+locator.<span class="op">count</span>()         <span class="cm"># number of matches</span>
+locator.<span class="op">all</span>()           <span class="cm"># list[Locator]</span>
+
+<span class="kw">for</span> item <span class="kw">in</span> locator.<span class="op">all</span>():
+    item.<span class="op">click</span>()</div>
+        <div class="snip async-block">locator.<span class="op">first</span>                         <span class="cm"># property</span>
+locator.<span class="op">last</span>
+locator.<span class="op">nth</span>(<span class="cn">2</span>)
+<span class="kw">await</span> locator.<span class="op">count</span>()
+<span class="kw">for</span> item <span class="kw">in await</span> locator.<span class="op">all</span>():
+    <span class="kw">await</span> item.<span class="op">click</span>()</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-head"><div class="dot c"></div><h3>iframes &amp; shadow DOM</h3></div>
+      <div class="card-body">
+        <div class="snip sync-block"><span class="cm"># enter an iframe</span>
+frame = page.<span class="op">frame_locator</span>(<span class="st">"#my-iframe"</span>)
+frame.<span class="op">get_by_role</span>(<span class="st">"button"</span>).<span class="op">click</span>()
+
+<span class="cm"># by name / url</span>
+frame = page.<span class="op">frame</span>(name=<span class="st">"embedded"</span>)
+frame = page.<span class="op">frame</span>(url=<span class="st">"**/widget**"</span>)
+
+<span class="cm"># shadow DOM — auto-pierced</span>
+page.<span class="op">locator</span>(<span class="st">"my-comp >> .inner"</span>)</div>
+        <div class="snip async-block">frame = page.<span class="op">frame_locator</span>(<span class="st">"#my-iframe"</span>)
+<span class="kw">await</span> frame.<span class="op">get_by_role</span>(<span class="st">"button"</span>).<span class="op">click</span>()</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-head"><div class="dot r"></div><h3>OR / conditional</h3></div>
+      <div class="card-body">
+        <div class="snip sync-block"><span class="cm"># whichever element appears first</span>
+dialog = page.<span class="op">get_by_text</span>(<span class="st">"Security check"</span>)
+btn    = page.<span class="op">get_by_role</span>(<span class="st">"button"</span>, name=<span class="st">"New"</span>)
+
+<span class="fn">expect</span>(btn.<span class="op">or_</span>(dialog).<span class="op">first</span>).<span class="op">to_be_visible</span>()
+<span class="kw">if</span> dialog.<span class="op">is_visible</span>():
+    page.<span class="op">get_by_role</span>(<span class="st">"button"</span>, name=<span class="st">"Dismiss"</span>).<span class="op">click</span>()
+btn.<span class="op">click</span>()</div>
+        <div class="snip async-block"><span class="kw">await</span> <span class="fn">expect</span>(btn.<span class="op">or_</span>(dialog).<span class="op">first</span>).<span class="op">to_be_visible</span>()
+<span class="kw">if await</span> dialog.<span class="op">is_visible</span>():
+    <span class="kw">await</span> page.<span class="op">get_by_role</span>(<span class="st">"button"</span>, name=<span class="st">"Dismiss"</span>).<span class="op">click</span>()
+<span class="kw">await</span> btn.<span class="op">click</span>()</div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════════════ ACTIONS -->
+<div id="actions" class="panel">
+  <div class="grid">
+
+    <div class="card">
+      <div class="card-head"><div class="dot b"></div><h3>Mouse actions</h3></div>
+      <div class="card-body">
+        <div class="snip sync-block">locator.<span class="op">click</span>()
+locator.<span class="op">click</span>(button=<span class="st">"right"</span>)       <span class="cm"># right-click</span>
+locator.<span class="op">click</span>(modifiers=[<span class="st">"Shift"</span>])  <span class="cm"># shift+click</span>
+locator.<span class="op">click</span>(position={<span class="st">"x"</span>: <span class="cn">10</span>, <span class="st">"y"</span>: <span class="cn">5</span>})
+locator.<span class="op">dblclick</span>()
+locator.<span class="op">hover</span>()
+locator.<span class="op">tap</span>()                      <span class="cm"># mobile touch</span>
+locator.<span class="op">scroll_into_view_if_needed</span>()</div>
+        <div class="snip async-block"><span class="kw">await</span> locator.<span class="op">click</span>()
+<span class="kw">await</span> locator.<span class="op">click</span>(button=<span class="st">"right"</span>)
+<span class="kw">await</span> locator.<span class="op">dblclick</span>()
+<span class="kw">await</span> locator.<span class="op">hover</span>()
+<span class="kw">await</span> locator.<span class="op">tap</span>()</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-head"><div class="dot g"></div><h3>Keyboard &amp; text input</h3></div>
+      <div class="card-body">
+        <div class="snip sync-block"><span class="cm"># type (replaces current value)</span>
+locator.<span class="op">fill</span>(<span class="st">"hello@example.com"</span>)
+
+<span class="cm"># simulate keystrokes</span>
+locator.<span class="op">press_sequentially</span>(<span class="st">"hello"</span>, delay=<span class="cn">50</span>)
+
+<span class="cm"># single key / combo</span>
+locator.<span class="op">press</span>(<span class="st">"Enter"</span>)
+locator.<span class="op">press</span>(<span class="st">"Control+a"</span>)
+locator.<span class="op">press</span>(<span class="st">"ArrowDown"</span>)
+locator.<span class="op">clear</span>()
+
+<span class="cm"># global keyboard events</span>
+page.keyboard.<span class="op">press</span>(<span class="st">"Escape"</span>)
+page.keyboard.<span class="op">type</span>(<span class="st">"some text"</span>)</div>
+        <div class="snip async-block"><span class="kw">await</span> locator.<span class="op">fill</span>(<span class="st">"hello@example.com"</span>)
+<span class="kw">await</span> locator.<span class="op">press_sequentially</span>(<span class="st">"hello"</span>, delay=<span class="cn">50</span>)
+<span class="kw">await</span> locator.<span class="op">press</span>(<span class="st">"Enter"</span>)
+<span class="kw">await</span> locator.<span class="op">clear</span>()
+<span class="kw">await</span> page.keyboard.<span class="op">press</span>(<span class="st">"Escape"</span>)</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-head"><div class="dot y"></div><h3>Forms</h3></div>
+      <div class="card-body">
+        <div class="snip sync-block"><span class="cm"># checkbox / radio</span>
+locator.<span class="op">check</span>()
+locator.<span class="op">uncheck</span>()
+locator.<span class="op">set_checked</span>(<span class="cn">True</span>)
+
+<span class="cm"># &lt;select&gt; dropdown</span>
+locator.<span class="op">select_option</span>(<span class="st">"value"</span>)
+locator.<span class="op">select_option</span>(label=<span class="st">"Blue"</span>)
+locator.<span class="op">select_option</span>(index=<span class="cn">2</span>)
+locator.<span class="op">select_option</span>([<span class="st">"a"</span>, <span class="st">"b"</span>])  <span class="cm"># multi</span>
+
+<span class="cm"># file upload</span>
+locator.<span class="op">set_input_files</span>(<span class="st">"report.pdf"</span>)
+locator.<span class="op">set_input_files</span>([<span class="st">"a.pdf"</span>, <span class="st">"b.pdf"</span>])</div>
+        <div class="snip async-block"><span class="kw">await</span> locator.<span class="op">check</span>()
+<span class="kw">await</span> locator.<span class="op">uncheck</span>()
+<span class="kw">await</span> locator.<span class="op">select_option</span>(<span class="st">"value"</span>)
+<span class="kw">await</span> locator.<span class="op">set_input_files</span>(<span class="st">"report.pdf"</span>)</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-head"><div class="dot p"></div><h3>Reading element values</h3></div>
+      <div class="card-body">
+        <div class="snip sync-block">locator.<span class="op">text_content</span>()     <span class="cm"># node.textContent</span>
+locator.<span class="op">inner_text</span>()      <span class="cm"># el.innerText</span>
+locator.<span class="op">inner_html</span>()      <span class="cm"># el.innerHTML</span>
+locator.<span class="op">input_value</span>()     <span class="cm"># &lt;input&gt; value</span>
+locator.<span class="op">get_attribute</span>(<span class="st">"href"</span>)
+locator.<span class="op">is_visible</span>()
+locator.<span class="op">is_enabled</span>()
+locator.<span class="op">is_checked</span>()
+locator.<span class="op">bounding_box</span>()   <span class="cm"># {x,y,width,height}</span></div>
+        <div class="snip async-block"><span class="kw">await</span> locator.<span class="op">text_content</span>()
+<span class="kw">await</span> locator.<span class="op">input_value</span>()
+<span class="kw">await</span> locator.<span class="op">get_attribute</span>(<span class="st">"href"</span>)
+<span class="kw">await</span> locator.<span class="op">is_visible</span>()
+<span class="kw">await</span> locator.<span class="op">bounding_box</span>()</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-head"><div class="dot c"></div><h3>JS evaluate</h3></div>
+      <div class="card-body">
+        <div class="snip sync-block"><span class="cm"># run JS in the page</span>
+title = page.<span class="op">evaluate</span>(<span class="st">"document.title"</span>)
+
+<span class="cm"># pass Python args</span>
+result = page.<span class="op">evaluate</span>(<span class="st">"([a,b]) => a+b"</span>, [<span class="cn">1</span>, <span class="cn">2</span>])
+
+<span class="cm"># evaluate on matching elements</span>
+texts = locator.<span class="op">evaluate_all</span>(
+    <span class="st">"els => els.map(e => e.textContent)"</span>
+)
+
+<span class="cm"># expose Python function to page</span>
+page.<span class="op">expose_function</span>(<span class="st">"myFn"</span>, <span class="kw">lambda</span> x: x * <span class="cn">2</span>)</div>
+        <div class="snip async-block">title = <span class="kw">await</span> page.<span class="op">evaluate</span>(<span class="st">"document.title"</span>)
+texts = <span class="kw">await</span> locator.<span class="op">evaluate_all</span>(
+    <span class="st">"els => els.map(e => e.textContent)"</span>
+)</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-head"><div class="dot r"></div><h3>Dialogs &amp; popups</h3></div>
+      <div class="card-body">
+        <div class="snip sync-block"><span class="cm"># handle alert / confirm / prompt</span>
+page.<span class="op">on</span>(<span class="st">"dialog"</span>, <span class="kw">lambda</span> d: d.<span class="op">accept</span>())
+page.<span class="op">on</span>(<span class="st">"dialog"</span>, <span class="kw">lambda</span> d: d.<span class="op">dismiss</span>())
+page.<span class="op">on</span>(<span class="st">"dialog"</span>, <span class="kw">lambda</span> d: d.<span class="op">fill</span>(<span class="st">"input text"</span>))
+
+<span class="cm"># capture new tab / popup</span>
+<span class="kw">with</span> page.<span class="op">expect_popup</span>() <span class="kw">as</span> popup_info:
+    page.<span class="op">get_by_text</span>(<span class="st">"Open tab"</span>).<span class="op">click</span>()
+popup = popup_info.<span class="op">value</span>
+popup.<span class="op">wait_for_load_state</span>()</div>
+        <div class="snip async-block">page.<span class="op">on</span>(<span class="st">"dialog"</span>, <span class="kw">lambda</span> d: d.<span class="op">accept</span>())
+
+<span class="kw">async with</span> page.<span class="op">expect_popup</span>() <span class="kw">as</span> popup_info:
+    <span class="kw">await</span> page.<span class="op">get_by_text</span>(<span class="st">"Open tab"</span>).<span class="op">click</span>()
+popup = <span class="kw">await</span> popup_info.<span class="op">value</span>
+<span class="kw">await</span> popup.<span class="op">wait_for_load_state</span>()</div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════════════ DRAG & DROP -->
+<div id="dragdrop" class="panel">
+  <div class="grid grid-wide">
+
+    <div class="card">
+      <div class="card-head"><div class="dot y"></div><h3>High-level drag_and_drop (page)</h3></div>
+      <div class="card-body">
+        <div class="tip"><strong>Simplest way</strong> — uses CSS selectors, handles scroll automatically.</div>
+        <div class="snip sync-block"><span class="cm"># basic</span>
+page.<span class="op">drag_and_drop</span>(<span class="st">"#source"</span>, <span class="st">"#target"</span>)
+
+<span class="cm"># with precise drop position</span>
+page.<span class="op">drag_and_drop</span>(
+    <span class="st">"#source"</span>, <span class="st">"#target"</span>,
+    source_position={<span class="st">"x"</span>: <span class="cn">34</span>, <span class="st">"y"</span>: <span class="cn">7</span>},
+    target_position={<span class="st">"x"</span>: <span class="cn">10</span>, <span class="st">"y"</span>: <span class="cn">20</span>},
+)</div>
+        <div class="snip async-block"><span class="kw">await</span> page.<span class="op">drag_and_drop</span>(<span class="st">"#source"</span>, <span class="st">"#target"</span>)
+
+<span class="kw">await</span> page.<span class="op">drag_and_drop</span>(
+    <span class="st">"#source"</span>, <span class="st">"#target"</span>,
+    source_position={<span class="st">"x"</span>: <span class="cn">34</span>, <span class="st">"y"</span>: <span class="cn">7</span>},
+    target_position={<span class="st">"x"</span>: <span class="cn">10</span>, <span class="st">"y"</span>: <span class="cn">20</span>},
+)</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-head"><div class="dot b"></div><h3>Locator-based drag_to</h3></div>
+      <div class="card-body">
+        <div class="tip"><strong>Preferred</strong> — works with <code>get_by_*</code> locators, more readable.</div>
+        <div class="snip sync-block">source = page.<span class="op">locator</span>(<span class="st">"#source"</span>)
+target = page.<span class="op">locator</span>(<span class="st">"#target"</span>)
+
+<span class="cm"># simple drag</span>
+source.<span class="op">drag_to</span>(target)
+
+<span class="cm"># with exact pixel offsets</span>
+source.<span class="op">drag_to</span>(
+    target,
+    source_position={<span class="st">"x"</span>: <span class="cn">34</span>, <span class="st">"y"</span>: <span class="cn">7</span>},
+    target_position={<span class="st">"x"</span>: <span class="cn">10</span>, <span class="st">"y"</span>: <span class="cn">20</span>},
+)
+
+<span class="cm"># skip actionability checks (force)</span>
+source.<span class="op">drag_to</span>(target, force=<span class="cn">True</span>)</div>
+        <div class="snip async-block">source = page.<span class="op">locator</span>(<span class="st">"#source"</span>)
+target = page.<span class="op">locator</span>(<span class="st">"#target"</span>)
+
+<span class="kw">await</span> source.<span class="op">drag_to</span>(target)
+
+<span class="kw">await</span> source.<span class="op">drag_to</span>(
+    target,
+    source_position={<span class="st">"x"</span>: <span class="cn">34</span>, <span class="st">"y"</span>: <span class="cn">7</span>},
+    target_position={<span class="st">"x"</span>: <span class="cn">10</span>, <span class="st">"y"</span>: <span class="cn">20</span>},
+)</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-head"><div class="dot g"></div><h3>Low-level mouse API</h3></div>
+      <div class="card-body">
+        <div class="tip"><strong>Use when</strong> the app uses <code>dragover</code> events — requires two mouse moves over the target to trigger it reliably.</div>
+        <div class="snip sync-block"><span class="cm"># manual mouse-down → move → up</span>
+page.mouse.<span class="op">move</span>(<span class="cn">100</span>, <span class="cn">200</span>)   <span class="cm"># hover source</span>
+page.mouse.<span class="op">down</span>()
+page.mouse.<span class="op">move</span>(<span class="cn">500</span>, <span class="cn">200</span>)   <span class="cm"># move to target (1st)</span>
+page.mouse.<span class="op">move</span>(<span class="cn">500</span>, <span class="cn">200</span>)   <span class="cm"># repeat for dragover</span>
+page.mouse.<span class="op">up</span>()
+
+<span class="cm"># useful for canvas / custom sortables</span>
+page.mouse.<span class="op">move</span>(<span class="cn">100</span>, <span class="cn">100</span>)
+page.mouse.<span class="op">down</span>()
+<span class="kw">for</span> step <span class="kw">in</span> <span class="fn">range</span>(<span class="cn">0</span>, <span class="cn">400</span>, <span class="cn">10</span>):
+    page.mouse.<span class="op">move</span>(step, <span class="cn">100</span>)
+page.mouse.<span class="op">up</span>()</div>
+        <div class="snip async-block"><span class="kw">await</span> page.mouse.<span class="op">move</span>(<span class="cn">100</span>, <span class="cn">200</span>)
+<span class="kw">await</span> page.mouse.<span class="op">down</span>()
+<span class="kw">await</span> page.mouse.<span class="op">move</span>(<span class="cn">500</span>, <span class="cn">200</span>)
+<span class="kw">await</span> page.mouse.<span class="op">move</span>(<span class="cn">500</span>, <span class="cn">200</span>)  <span class="cm"># repeat for dragover</span>
+<span class="kw">await</span> page.mouse.<span class="op">up</span>()</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-head"><div class="dot p"></div><h3>DataTransfer / dispatch_event</h3></div>
+      <div class="card-body">
+        <div class="tip"><strong>Use when</strong> the app checks <code>event.dataTransfer</code> data (e.g. file drag between browser areas).</div>
+        <div class="snip sync-block"><span class="cm"># create a DataTransfer handle in the page</span>
+data_transfer = page.<span class="op">evaluate_handle</span>(
+    <span class="st">"new DataTransfer()"</span>
+)
+
+<span class="cm"># dispatch dragstart on source</span>
+page.<span class="op">locator</span>(<span class="st">"#source"</span>).<span class="op">dispatch_event</span>(
+    <span class="st">"dragstart"</span>,
+    {<span class="st">"dataTransfer"</span>: data_transfer},
+)
+
+<span class="cm"># dispatch drop on target</span>
+page.<span class="op">locator</span>(<span class="st">"#target"</span>).<span class="op">dispatch_event</span>(
+    <span class="st">"drop"</span>,
+    {<span class="st">"dataTransfer"</span>: data_transfer},
+)</div>
+        <div class="snip async-block">data_transfer = <span class="kw">await</span> page.<span class="op">evaluate_handle</span>(
+    <span class="st">"new DataTransfer()"</span>
+)
+<span class="kw">await</span> page.<span class="op">locator</span>(<span class="st">"#source"</span>).<span class="op">dispatch_event</span>(
+    <span class="st">"dragstart"</span>, {<span class="st">"dataTransfer"</span>: data_transfer}
+)
+<span class="kw">await</span> page.<span class="op">locator</span>(<span class="st">"#target"</span>).<span class="op">dispatch_event</span>(
+    <span class="st">"drop"</span>, {<span class="st">"dataTransfer"</span>: data_transfer}
+)</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-head"><div class="dot r"></div><h3>Scroll</h3></div>
+      <div class="card-body">
+        <div class="snip sync-block"><span class="cm"># scroll element into view</span>
+locator.<span class="op">scroll_into_view_if_needed</span>()
+
+<span class="cm"># scroll page by pixels</span>
+page.mouse.<span class="op">wheel</span>(<span class="cn">0</span>, <span class="cn">500</span>)       <span class="cm"># down 500px</span>
+
+<span class="cm"># scroll inside a container</span>
+page.<span class="op">locator</span>(<span class="st">".scroll-box"</span>).<span class="op">evaluate</span>(
+    <span class="st">"el => el.scrollTop += 300"</span>
+)
+
+<span class="cm"># force load infinite list</span>
+page.<span class="op">get_by_text</span>(<span class="st">"Footer"</span>).<span class="op">scroll_into_view_if_needed</span>()</div>
+        <div class="snip async-block"><span class="kw">await</span> locator.<span class="op">scroll_into_view_if_needed</span>()
+<span class="kw">await</span> page.mouse.<span class="op">wheel</span>(<span class="cn">0</span>, <span class="cn">500</span>)
+<span class="kw">await</span> page.<span class="op">locator</span>(<span class="st">".scroll-box"</span>).<span class="op">evaluate</span>(
+    <span class="st">"el => el.scrollTop += 300"</span>
+)</div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════════════ SCREENSHOTS -->
+<div id="screenshots" class="panel">
+  <div class="grid grid-wide">
+
+    <div class="card">
+      <div class="card-head"><div class="dot b"></div><h3>Page screenshots</h3></div>
+      <div class="card-body">
+        <div class="snip sync-block"><span class="cm"># simple — saves PNG to disk</span>
+page.<span class="op">screenshot</span>(path=<span class="st">"screenshot.png"</span>)
+
+<span class="cm"># full-page (entire scrollable page)</span>
+page.<span class="op">screenshot</span>(path=<span class="st">"full.png"</span>, full_page=<span class="cn">True</span>)
+
+<span class="cm"># JPEG with quality</span>
+page.<span class="op">screenshot</span>(
+    path=<span class="st">"photo.jpg"</span>,
+    type=<span class="st">"jpeg"</span>,
+    quality=<span class="cn">80</span>,
+)
+
+<span class="cm"># return bytes (no file)</span>
+buf = page.<span class="op">screenshot</span>()
+<span class="kw">import</span> base64
+encoded = base64.<span class="op">b64encode</span>(buf).<span class="op">decode</span>()
+
+<span class="cm"># clip to a region</span>
+page.<span class="op">screenshot</span>(clip={
+    <span class="st">"x"</span>: <span class="cn">0</span>, <span class="st">"y"</span>: <span class="cn">0</span>, <span class="st">"width"</span>: <span class="cn">400</span>, <span class="st">"height"</span>: <span class="cn">300</span>
+})</div>
+        <div class="snip async-block">buf = <span class="kw">await</span> page.<span class="op">screenshot</span>(
+    path=<span class="st">"screenshot.png"</span>, full_page=<span class="cn">True</span>
+)
+
+<span class="cm"># return bytes</span>
+buf = <span class="kw">await</span> page.<span class="op">screenshot</span>()</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-head"><div class="dot g"></div><h3>Element screenshots</h3></div>
+      <div class="card-body">
+        <div class="snip sync-block"><span class="cm"># screenshot only one element</span>
+page.<span class="op">locator</span>(<span class="st">".hero-banner"</span>).<span class="op">screenshot</span>(
+    path=<span class="st">"banner.png"</span>
+)
+
+<span class="cm"># from get_by_* locator</span>
+page.<span class="op">get_by_role</span>(<span class="st">"dialog"</span>).<span class="op">screenshot</span>(
+    path=<span class="st">"dialog.png"</span>
+)
+
+<span class="cm"># bytes only</span>
+buf = page.<span class="op">locator</span>(<span class="st">"#chart"</span>).<span class="op">screenshot</span>()</div>
+        <div class="snip async-block">buf = <span class="kw">await</span> page.<span class="op">locator</span>(<span class="st">".hero"</span>).<span class="op">screenshot</span>(
+    path=<span class="st">"banner.png"</span>
+)</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-head"><div class="dot y"></div><h3>Screenshot options</h3></div>
+      <div class="card-body">
+        <table>
+          <tr><th>Option</th><th>Type</th><th>Description</th></tr>
+          <tr><td><code>path</code></td><td>str</td><td>Save file (PNG/JPG inferred from ext)</td></tr>
+          <tr><td><code>full_page</code></td><td>bool</td><td>Capture entire scrollable page</td></tr>
+          <tr><td><code>type</code></td><td>"png"/"jpeg"</td><td>Image format</td></tr>
+          <tr><td><code>quality</code></td><td>0-100</td><td>JPEG quality (not for PNG)</td></tr>
+          <tr><td><code>clip</code></td><td>dict</td><td>x, y, width, height</td></tr>
+          <tr><td><code>omit_background</code></td><td>bool</td><td>Transparent background (PNG only)</td></tr>
+          <tr><td><code>animations</code></td><td>"disabled"/"allow"</td><td>Freeze CSS animations</td></tr>
+          <tr><td><code>scale</code></td><td>"css"/"device"</td><td>CSS px vs device px</td></tr>
+          <tr><td><code>mask</code></td><td>list[Locator]</td><td>Pink-box over sensitive elements</td></tr>
+          <tr><td><code>mask_color</code></td><td>str</td><td>Custom mask colour (default #FF00FF)</td></tr>
+          <tr><td><code>timeout</code></td><td>float ms</td><td>Max wait time</td></tr>
+        </table>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-head"><div class="dot p"></div><h3>Visual regression (pytest)</h3></div>
+      <div class="card-body">
+        <div class="snip"><span class="cm"># install plugin</span>
+pip install pytest-playwright-visual
+
+<span class="cm"># or use built-in assertions</span>
+<span class="kw">from</span> playwright.sync_api <span class="kw">import</span> expect
+
+<span class="kw">def</span> <span class="fn">test_homepage_snapshot</span>(page):
+    page.<span class="op">goto</span>(<span class="st">"https://example.com"</span>)
+    <span class="fn">expect</span>(page).<span class="op">to_have_screenshot</span>(<span class="st">"home.png"</span>)
+
+<span class="cm"># element snapshot</span>
+<span class="kw">def</span> <span class="fn">test_chart_snapshot</span>(page):
+    <span class="fn">expect</span>(
+        page.<span class="op">locator</span>(<span class="st">"#chart"</span>)
+    ).<span class="op">to_have_screenshot</span>(<span class="st">"chart.png"</span>)
+
+<span class="cm"># update snapshots:</span>
+<span class="cm"># pytest --update-snapshots</span></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-head"><div class="dot c"></div><h3>Masking sensitive data</h3></div>
+      <div class="card-body">
+        <div class="snip sync-block"><span class="cm"># mask elements before screenshot</span>
+page.<span class="op">screenshot</span>(
+    path=<span class="st">"masked.png"</span>,
+    mask=[
+        page.<span class="op">get_by_label</span>(<span class="st">"Credit card"</span>),
+        page.<span class="op">locator</span>(<span class="st">".user-email"</span>),
+    ],
+    mask_color=<span class="st">"#ffcccc"</span>,  <span class="cm"># custom overlay colour</span>
+)
+
+<span class="cm"># hide animations for stable snapshots</span>
+page.<span class="op">screenshot</span>(
+    path=<span class="st">"stable.png"</span>,
+    animations=<span class="st">"disabled"</span>,
+    full_page=<span class="cn">True</span>,
+)</div>
+        <div class="snip async-block"><span class="kw">await</span> page.<span class="op">screenshot</span>(
+    path=<span class="st">"masked.png"</span>,
+    mask=[page.<span class="op">get_by_label</span>(<span class="st">"Credit card"</span>)],
+    animations=<span class="st">"disabled"</span>,
+)</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-head"><div class="dot r"></div><h3>Traces (with screenshots)</h3></div>
+      <div class="card-body">
+        <div class="snip sync-block"><span class="cm"># start tracing (records screenshots per step)</span>
+context.<span class="op">tracing</span>.<span class="op">start</span>(
+    screenshots=<span class="cn">True</span>,
+    snapshots=<span class="cn">True</span>,
+    sources=<span class="cn">True</span>,
+)
+page.<span class="op">goto</span>(<span class="st">"https://playwright.dev"</span>)
+<span class="cm"># ... run your test ...</span>
+context.<span class="op">tracing</span>.<span class="op">stop</span>(path=<span class="st">"trace.zip"</span>)
+
+<span class="cm"># view in browser:</span>
+<span class="cm"># playwright show-trace trace.zip</span></div>
+        <div class="snip async-block"><span class="kw">await</span> context.<span class="op">tracing</span>.<span class="op">start</span>(
+    screenshots=<span class="cn">True</span>, snapshots=<span class="cn">True</span>, sources=<span class="cn">True</span>
+)
+<span class="kw">await</span> page.<span class="op">goto</span>(<span class="st">"https://playwright.dev"</span>)
+<span class="kw">await</span> context.<span class="op">tracing</span>.<span class="op">stop</span>(path=<span class="st">"trace.zip"</span>)</div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════════════ ASSERTIONS -->
+<div id="assertions" class="panel">
+  <div class="grid">
+
+    <div class="card">
+      <div class="card-head"><div class="dot g"></div><h3>Locator assertions</h3></div>
+      <div class="card-body">
+        <div class="snip sync-block"><span class="kw">from</span> playwright.sync_api <span class="kw">import</span> expect
+
+<span class="fn">expect</span>(locator).<span class="op">to_be_visible</span>()
+<span class="fn">expect</span>(locator).<span class="op">to_be_hidden</span>()
+<span class="fn">expect</span>(locator).<span class="op">to_be_attached</span>()
+<span class="fn">expect</span>(locator).<span class="op">to_be_enabled</span>()
+<span class="fn">expect</span>(locator).<span class="op">to_be_disabled</span>()
+<span class="fn">expect</span>(locator).<span class="op">to_be_checked</span>()
+<span class="fn">expect</span>(locator).<span class="op">to_be_editable</span>()
+<span class="fn">expect</span>(locator).<span class="op">to_be_empty</span>()
+<span class="fn">expect</span>(locator).<span class="op">to_be_focused</span>()
+<span class="fn">expect</span>(locator).<span class="op">to_be_in_viewport</span>()</div>
+        <div class="snip async-block"><span class="kw">from</span> playwright.async_api <span class="kw">import</span> expect
+
+<span class="kw">await</span> <span class="fn">expect</span>(locator).<span class="op">to_be_visible</span>()
+<span class="kw">await</span> <span class="fn">expect</span>(locator).<span class="op">to_be_enabled</span>()
+<span class="kw">await</span> <span class="fn">expect</span>(locator).<span class="op">to_be_checked</span>()</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-head"><div class="dot b"></div><h3>Content &amp; attribute assertions</h3></div>
+      <div class="card-body">
+        <div class="snip sync-block"><span class="fn">expect</span>(locator).<span class="op">to_have_text</span>(<span class="st">"Hello"</span>)
+<span class="fn">expect</span>(locator).<span class="op">to_have_text</span>(re.<span class="op">compile</span>(<span class="st">r"He\w+"</span>))
+<span class="fn">expect</span>(locator).<span class="op">to_contain_text</span>(<span class="st">"ell"</span>)
+<span class="fn">expect</span>(locator).<span class="op">to_have_value</span>(<span class="st">"foo@bar.com"</span>)
+<span class="fn">expect</span>(locator).<span class="op">to_have_values</span>([<span class="st">"a"</span>, <span class="st">"b"</span>])
+<span class="fn">expect</span>(locator).<span class="op">to_have_attribute</span>(<span class="st">"href"</span>, <span class="st">"/about"</span>)
+<span class="fn">expect</span>(locator).<span class="op">to_have_class</span>(<span class="st">"active selected"</span>)
+<span class="fn">expect</span>(locator).<span class="op">to_contain_class</span>(<span class="st">"active"</span>)
+<span class="fn">expect</span>(locator).<span class="op">to_have_count</span>(<span class="cn">3</span>)
+<span class="fn">expect</span>(locator).<span class="op">to_have_css</span>(<span class="st">"color"</span>, <span class="st">"rgb(0,0,0)"</span>)
+<span class="fn">expect</span>(locator).<span class="op">to_have_id</span>(<span class="st">"submit-btn"</span>)
+<span class="fn">expect</span>(locator).<span class="op">to_have_accessible_name</span>(<span class="st">"Submit"</span>)</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-head"><div class="dot y"></div><h3>Page assertions</h3></div>
+      <div class="card-body">
+        <div class="snip sync-block"><span class="fn">expect</span>(page).<span class="op">to_have_title</span>(<span class="st">"My App"</span>)
+<span class="fn">expect</span>(page).<span class="op">to_have_title</span>(re.<span class="op">compile</span>(<span class="st">r"Docs"</span>))
+<span class="fn">expect</span>(page).<span class="op">to_have_url</span>(<span class="st">"https://example.com/"</span>)
+<span class="fn">expect</span>(page).<span class="op">to_have_url</span>(re.<span class="op">compile</span>(<span class="st">r"/dashboard"</span>))
+
+<span class="cm"># API response</span>
+<span class="fn">expect</span>(response).<span class="op">to_be_ok</span>()    <span class="cm"># 2xx status</span>
+
+<span class="cm"># visual snapshot</span>
+<span class="fn">expect</span>(page).<span class="op">to_have_screenshot</span>(<span class="st">"home.png"</span>)
+<span class="fn">expect</span>(locator).<span class="op">to_have_screenshot</span>(<span class="st">"widget.png"</span>)</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-head"><div class="dot p"></div><h3>Negation, soft &amp; custom timeout</h3></div>
+      <div class="card-body">
+        <div class="snip sync-block"><span class="cm"># negate</span>
+<span class="fn">expect</span>(locator).<span class="op">not_</span>.<span class="op">to_be_visible</span>()
+
+<span class="cm"># custom timeout (ms)</span>
+<span class="fn">expect</span>(locator).<span class="op">to_be_visible</span>(timeout=<span class="cn">10_000</span>)
+
+<span class="cm"># soft assertion — test keeps running</span>
+<span class="fn">expect</span>.<span class="op">soft</span>(locator).<span class="op">to_have_text</span>(<span class="st">"Hello"</span>)
+
+<span class="cm"># poll arbitrary condition</span>
+<span class="fn">expect</span>.<span class="op">poll</span>(
+    <span class="kw">lambda</span>: page.<span class="op">evaluate</span>(<span class="st">"window.loaded"</span>),
+    timeout=<span class="cn">5_000</span>,
+).<span class="op">to_be_truthy</span>()</div>
+        <div class="snip async-block"><span class="kw">await</span> <span class="fn">expect</span>(locator).<span class="op">not_</span>.<span class="op">to_be_visible</span>()
+<span class="kw">await</span> <span class="fn">expect</span>(locator).<span class="op">to_be_visible</span>(timeout=<span class="cn">10_000</span>)</div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════════════ NAVIGATION -->
+<div id="navigation" class="panel">
+  <div class="grid">
+
+    <div class="card">
+      <div class="card-head"><div class="dot b"></div><h3>Navigation &amp; waiting</h3></div>
+      <div class="card-body">
+        <div class="snip sync-block">page.<span class="op">goto</span>(<span class="st">"https://example.com"</span>)
+page.<span class="op">goto</span>(<span class="st">"/path"</span>)      <span class="cm"># relative if base_url set</span>
+page.<span class="op">reload</span>()
+page.<span class="op">go_back</span>()
+page.<span class="op">go_forward</span>()
+
+<span class="cm"># wait_until options</span>
+page.<span class="op">goto</span>(<span class="st">"/slow"</span>, wait_until=<span class="st">"networkidle"</span>)
+<span class="cm"># options: "domcontentloaded" | "load" | "networkidle" | "commit"</span>
+
+page.<span class="op">wait_for_load_state</span>(<span class="st">"networkidle"</span>)
+page.<span class="op">wait_for_url</span>(<span class="st">"**/dashboard"</span>)
+page.<span class="op">wait_for_url</span>(re.<span class="op">compile</span>(<span class="st">r"/profile$"</span>))</div>
+        <div class="snip async-block"><span class="kw">await</span> page.<span class="op">goto</span>(<span class="st">"https://example.com"</span>)
+<span class="kw">await</span> page.<span class="op">goto</span>(<span class="st">"/slow"</span>, wait_until=<span class="st">"networkidle"</span>)
+<span class="kw">await</span> page.<span class="op">wait_for_url</span>(<span class="st">"**/dashboard"</span>)</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-head"><div class="dot g"></div><h3>Wait for element / event</h3></div>
+      <div class="card-body">
+        <div class="snip sync-block"><span class="cm"># wait for locator state</span>
+locator.<span class="op">wait_for</span>(state=<span class="st">"visible"</span>)
+locator.<span class="op">wait_for</span>(state=<span class="st">"hidden"</span>)
+locator.<span class="op">wait_for</span>(state=<span class="st">"attached"</span>)
+locator.<span class="op">wait_for</span>(state=<span class="st">"detached"</span>)
+
+<span class="cm"># wait for request / response</span>
+<span class="kw">with</span> page.<span class="op">expect_request</span>(<span class="st">"**/api/data"</span>) <span class="kw">as</span> r:
+    page.<span class="op">get_by_text</span>(<span class="st">"Load"</span>).<span class="op">click</span>()
+req = r.<span class="op">value</span>
+
+<span class="kw">with</span> page.<span class="op">expect_response</span>(<span class="st">"**/api/**"</span>) <span class="kw">as</span> r:
+    page.<span class="op">get_by_text</span>(<span class="st">"Load"</span>).<span class="op">click</span>()
+resp = r.<span class="op">value</span></div>
+        <div class="snip async-block"><span class="kw">await</span> locator.<span class="op">wait_for</span>(state=<span class="st">"visible"</span>)
+
+<span class="kw">async with</span> page.<span class="op">expect_response</span>(<span class="st">"**/api/**"</span>) <span class="kw">as</span> r:
+    <span class="kw">await</span> page.<span class="op">get_by_text</span>(<span class="st">"Load"</span>).<span class="op">click</span>()
+resp = <span class="kw">await</span> r.<span class="op">value</span></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-head"><div class="dot y"></div><h3>Downloads &amp; file chooser</h3></div>
+      <div class="card-body">
+        <div class="snip sync-block"><span class="cm"># download a file</span>
+<span class="kw">with</span> page.<span class="op">expect_download</span>() <span class="kw">as</span> dl_info:
+    page.<span class="op">get_by_text</span>(<span class="st">"Export CSV"</span>).<span class="op">click</span>()
+download = dl_info.<span class="op">value</span>
+download.<span class="op">save_as</span>(<span class="st">"/tmp/data.csv"</span>)
+<span class="fn">print</span>(download.<span class="op">suggested_filename</span>)
+
+<span class="cm"># handle file chooser (upload dialog)</span>
+<span class="kw">with</span> page.<span class="op">expect_file_chooser</span>() <span class="kw">as</span> fc_info:
+    page.<span class="op">get_by_text</span>(<span class="st">"Upload"</span>).<span class="op">click</span>()
+fc = fc_info.<span class="op">value</span>
+fc.<span class="op">set_files</span>(<span class="st">"report.pdf"</span>)
+fc.<span class="op">set_files</span>([<span class="st">"a.pdf"</span>, <span class="st">"b.jpg"</span>])</div>
+        <div class="snip async-block"><span class="kw">async with</span> page.<span class="op">expect_download</span>() <span class="kw">as</span> dl_info:
+    <span class="kw">await</span> page.<span class="op">get_by_text</span>(<span class="st">"Export"</span>).<span class="op">click</span>()
+download = <span class="kw">await</span> dl_info.<span class="op">value</span>
+<span class="kw">await</span> download.<span class="op">save_as</span>(<span class="st">"/tmp/data.csv"</span>)</div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════════════ NETWORK -->
+<div id="network" class="panel">
+  <div class="grid grid-wide">
+
+    <div class="card">
+      <div class="card-head"><div class="dot y"></div><h3>Route interception &amp; mocking</h3></div>
+      <div class="card-body">
+        <div class="snip sync-block"><span class="kw">import</span> json
+
+<span class="cm"># mock a response</span>
+page.<span class="op">route</span>(<span class="st">"**/api/items"</span>, <span class="kw">lambda</span> route: route.<span class="op">fulfill</span>(
+    status=<span class="cn">200</span>,
+    content_type=<span class="st">"application/json"</span>,
+    body=json.<span class="op">dumps</span>([{<span class="st">"id"</span>: <span class="cn">1</span>}]),
+))
+
+<span class="cm"># abort (e.g. block images)</span>
+page.<span class="op">route</span>(<span class="st">"**/*.jpg"</span>, <span class="kw">lambda</span> r: r.<span class="op">abort</span>())
+
+<span class="cm"># modify then continue</span>
+<span class="kw">def</span> <span class="fn">handle_route</span>(route):
+    resp = route.<span class="op">fetch</span>()
+    data = resp.<span class="op">json</span>()
+    data[<span class="st">"theme"</span>] = <span class="st">"dark"</span>
+    route.<span class="op">fulfill</span>(response=resp, json=data)
+
+page.<span class="op">route</span>(<span class="st">"**/api/**"</span>, <span class="fn">handle_route</span>)</div>
+        <div class="snip async-block"><span class="kw">async def</span> <span class="fn">handle_route</span>(route):
+    resp = <span class="kw">await</span> route.<span class="op">fetch</span>()
+    data = <span class="kw">await</span> resp.<span class="op">json</span>()
+    data[<span class="st">"theme"</span>] = <span class="st">"dark"</span>
+    <span class="kw">await</span> route.<span class="op">fulfill</span>(response=resp, json=data)
+
+<span class="kw">await</span> page.<span class="op">route</span>(<span class="st">"**/api/**"</span>, <span class="fn">handle_route</span>)</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-head"><div class="dot b"></div><h3>API testing (APIRequestContext)</h3></div>
+      <div class="card-body">
+        <div class="snip sync-block"><span class="kw">from</span> playwright.sync_api <span class="kw">import</span> sync_playwright
+
+<span class="kw">with</span> <span class="fn">sync_playwright</span>() <span class="kw">as</span> p:
+    <span class="cm"># shares cookies with page.request</span>
+    res = page.request.<span class="op">get</span>(<span class="st">"/api/users"</span>)
+    <span class="fn">expect</span>(res).<span class="op">to_be_ok</span>()
+    body = res.<span class="op">json</span>()
+
+    <span class="cm"># standalone context</span>
+    api = p.request.<span class="op">new_context</span>(
+        base_url=<span class="st">"https://api.example.com"</span>,
+        extra_http_headers={
+            <span class="st">"Authorization"</span>: <span class="st">"Bearer token"</span>
+        },
+    )
+    r = api.<span class="op">post</span>(<span class="st">"/items"</span>, data={<span class="st">"name"</span>: <span class="st">"x"</span>})
+    <span class="fn">expect</span>(r).<span class="op">to_be_ok</span>()
+    api.<span class="op">dispose</span>()</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-head"><div class="dot g"></div><h3>HAR recording &amp; replay</h3></div>
+      <div class="card-body">
+        <div class="snip sync-block"><span class="cm"># record</span>
+context = browser.<span class="op">new_context</span>(
+    record_har_path=<span class="st">"requests.har"</span>,
+)
+<span class="cm"># ... run tests ...</span>
+context.<span class="op">close</span>()  <span class="cm"># saves HAR on close</span>
+
+<span class="cm"># replay (no real network)</span>
+context2 = browser.<span class="op">new_context</span>()
+context2.<span class="op">route_from_har</span>(
+    <span class="st">"requests.har"</span>,
+    not_found=<span class="st">"fallback"</span>,  <span class="cm"># or "abort"</span>
+)
+page2 = context2.<span class="op">new_page</span>()</div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════════════ CONFIG / PYTEST -->
+<div id="config" class="panel">
+  <div class="grid grid-wide">
+
+    <div class="card">
+      <div class="card-head"><div class="dot b"></div><h3>pytest.ini / pyproject.toml</h3></div>
+      <div class="card-body">
+        <div class="snip"><span class="cm"># pyproject.toml</span>
+[tool.pytest.ini_options]
+addopts = <span class="st">"--browser chromium --headed"</span>
+
+<span class="cm"># or pytest.ini</span>
+[pytest]
+addopts = --browser=chromium --browser=firefox
+base_url = http://localhost:3000
+tracing = retain-on-failure
+screenshot = only-on-failure
+video = retain-on-failure
+slowmo = 50</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-head"><div class="dot g"></div><h3>conftest.py — fixtures</h3></div>
+      <div class="card-body">
+        <div class="snip"><span class="kw">import</span> pytest
+<span class="kw">from</span> playwright.sync_api <span class="kw">import</span> Page, BrowserContext
+
+<span class="cm"># custom browser context</span>
+<span class="dk">@pytest.fixture</span>(scope=<span class="st">"session"</span>)
+<span class="kw">def</span> <span class="fn">browser_context_args</span>(browser_context_args):
+    <span class="kw">return</span> {
+        **browser_context_args,
+        <span class="st">"viewport"</span>: {<span class="st">"width"</span>: <span class="cn">1280</span>, <span class="st">"height"</span>: <span class="cn">720</span>},
+        <span class="st">"locale"</span>: <span class="st">"en-US"</span>,
+        <span class="st">"timezone_id"</span>: <span class="st">"Europe/Prague"</span>,
+        <span class="st">"storage_state"</span>: <span class="st">"auth.json"</span>,
+    }
+
+<span class="cm"># logged-in page</span>
+<span class="dk">@pytest.fixture</span>
+<span class="kw">def</span> <span class="fn">logged_in_page</span>(page: Page):
+    page.<span class="op">goto</span>(<span class="st">"/login"</span>)
+    page.<span class="op">get_by_label</span>(<span class="st">"Email"</span>).<span class="op">fill</span>(<span class="st">"user@test.com"</span>)
+    page.<span class="op">get_by_label</span>(<span class="st">"Password"</span>).<span class="op">fill</span>(<span class="st">"pass"</span>)
+    page.<span class="op">get_by_role</span>(<span class="st">"button"</span>, name=<span class="st">"Login"</span>).<span class="op">click</span>()
+    <span class="kw">yield</span> page</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-head"><div class="dot y"></div><h3>Save &amp; reuse auth state</h3></div>
+      <div class="card-body">
+        <div class="snip sync-block"><span class="cm"># auth_setup.py — run once before test suite</span>
+<span class="kw">with</span> <span class="fn">sync_playwright</span>() <span class="kw">as</span> p:
+    browser = p.chromium.<span class="op">launch</span>()
+    context = browser.<span class="op">new_context</span>()
+    page = context.<span class="op">new_page</span>()
+    page.<span class="op">goto</span>(<span class="st">"https://app.example.com/login"</span>)
+    page.<span class="op">get_by_label</span>(<span class="st">"Email"</span>).<span class="op">fill</span>(<span class="st">"user@test.com"</span>)
+    page.<span class="op">get_by_role</span>(<span class="st">"button"</span>, name=<span class="st">"Sign in"</span>).<span class="op">click</span>()
+    context.<span class="op">storage_state</span>(path=<span class="st">"auth.json"</span>)
+    browser.<span class="op">close</span>()
+
+<span class="cm"># use in tests:</span>
+context = browser.<span class="op">new_context</span>(storage_state=<span class="st">"auth.json"</span>)</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-head"><div class="dot p"></div><h3>Device emulation</h3></div>
+      <div class="card-body">
+        <div class="snip sync-block"><span class="kw">from</span> playwright.sync_api <span class="kw">import</span> sync_playwright
+
+<span class="kw">with</span> <span class="fn">sync_playwright</span>() <span class="kw">as</span> p:
+    iphone = p.devices[<span class="st">"iPhone 14"</span>]
+    browser = p.webkit.<span class="op">launch</span>()
+    context = browser.<span class="op">new_context</span>(**iphone)
+    page = context.<span class="op">new_page</span>()
+    page.<span class="op">goto</span>(<span class="st">"https://example.com"</span>)
+
+<span class="cm"># print all device names:</span>
+<span class="fn">print</span>(list(p.devices.<span class="op">keys</span>()))</div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════════════ CLI -->
+<div id="cli" class="panel">
+  <div class="grid">
+
+    <div class="card">
+      <div class="card-head"><div class="dot g"></div><h3>Run tests (pytest)</h3></div>
+      <div class="card-body">
+        <div class="snip">pytest                             # all tests
+pytest tests/test_login.py        # single file
+pytest -k "cart"                  # by name match
+pytest --browser chromium
+pytest --browser firefox
+pytest --browser webkit
+pytest --headed                   # show browser
+pytest --slowmo 500               # ms delay
+pytest -x                         # stop on first fail
+pytest -n 4                       # parallel (pytest-xdist)
+pytest --tracing=on               # always trace
+pytest --screenshot=on            # always screenshot
+pytest --video=on                 # always record video
+pytest --update-snapshots         # refresh visual tests
+pytest -s                         # print stdout</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-head"><div class="dot b"></div><h3>Codegen &amp; tooling</h3></div>
+      <div class="card-body">
+        <div class="snip">playwright codegen example.com
+playwright codegen --device="iPhone 14" example.com
+playwright codegen --save-storage=auth.json example.com
+playwright codegen --load-storage=auth.json example.com
+
+playwright show-report            # open HTML report
+playwright show-trace trace.zip   # trace viewer
+
+playwright install                # all browsers
+playwright install chromium
+playwright install --with-deps   # + system deps (CI)</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-head"><div class="dot y"></div><h3>Skip / mark / parametrize</h3></div>
+      <div class="card-body">
+        <div class="snip"><span class="kw">import</span> pytest
+<span class="kw">from</span> playwright.sync_api <span class="kw">import</span> Page
+
+<span class="dk">@pytest.mark.skip</span>(reason=<span class="st">"WIP"</span>)
+<span class="kw">def</span> <span class="fn">test_wip</span>(page): ...
+
+<span class="dk">@pytest.mark.xfail</span>
+<span class="kw">def</span> <span class="fn">test_known_bug</span>(page): ...
+
+<span class="dk">@pytest.mark.only_browser</span>(<span class="st">"chromium"</span>)
+<span class="kw">def</span> <span class="fn">test_chrome_only</span>(page): ...
+
+<span class="dk">@pytest.mark.parametrize</span>(<span class="st">"url"</span>, [<span class="st">"/home"</span>, <span class="st">"/about"</span>])
+<span class="kw">def</span> <span class="fn">test_pages</span>(page: Page, url: <span class="fn">str</span>):
+    page.<span class="op">goto</span>(url)
+    <span class="kw">from</span> playwright.sync_api <span class="kw">import</span> expect
+    <span class="fn">expect</span>(page).<span class="op">to_have_url</span>(url)</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-head"><div class="dot p"></div><h3>Debug tips</h3></div>
+      <div class="card-body">
+        <div class="snip">PWDEBUG=1 pytest               # opens inspector
+PWDEBUG=console pytest         # log to console
+DEBUG=pw:api pytest            # verbose API log
+
+<span class="cm"># in code</span>
+page.<span class="op">pause</span>()                   <span class="cm"># open inspector mid-test</span>
+page.<span class="op">set_default_timeout</span>(<span class="cn">0</span>)   <span class="cm"># disable timeouts</span>
+browser = p.chromium.<span class="op">launch</span>(
+    headless=<span class="cn">False</span>, slow_mo=<span class="cn">200</span>
+)</div>
+        <div class="warn"><strong>Note:</strong> Never use <code>time.sleep()</code> — use <code>page.wait_for_timeout(ms)</code> or proper wait methods instead.</div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════════════ ADVANCED -->
+<div id="advanced" class="panel">
+  <div class="grid">
+
+    <div class="card">
+      <div class="card-head"><div class="dot p"></div><h3>Page Object Model</h3></div>
+      <div class="card-body">
+        <div class="snip"><span class="kw">from</span> playwright.sync_api <span class="kw">import</span> Page
+
+<span class="kw">class</span> LoginPage:
+    <span class="kw">def</span> <span class="fn">__init__</span>(self, page: Page):
+        self.page = page
+        <span class="cm"># ★ use test IDs for stable locators</span>
+        self.email    = page.<span class="op">get_by_test_id</span>(<span class="st">"email-input"</span>)
+        self.password = page.<span class="op">get_by_test_id</span>(<span class="st">"password-input"</span>)
+        self.submit   = page.<span class="op">get_by_test_id</span>(<span class="st">"login-submit"</span>)
+
+    <span class="kw">def</span> <span class="fn">login</span>(self, email: <span class="fn">str</span>, pwd: <span class="fn">str</span>):
+        self.page.<span class="op">goto</span>(<span class="st">"/login"</span>)
+        self.email.<span class="op">fill</span>(email)
+        self.password.<span class="op">fill</span>(pwd)
+        self.submit.<span class="op">click</span>()
+
+<span class="cm"># in test</span>
+<span class="kw">def</span> <span class="fn">test_login</span>(page: Page):
+    LoginPage(page).<span class="op">login</span>(<span class="st">"a@b.com"</span>, <span class="st">"pass"</span>)</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-head"><div class="dot g"></div><h3>Custom test-id attribute</h3></div>
+      <div class="card-body">
+        <div class="tip"><strong>Best practice:</strong> configure a custom attribute so <code>get_by_test_id()</code> matches your app's naming convention.</div>
+        <div class="snip"><span class="cm"># conftest.py — set globally</span>
+<span class="kw">from</span> playwright.sync_api <span class="kw">import</span> playwright <span class="kw">as</span> pw_type
+
+<span class="dk">@pytest.fixture</span>(scope=<span class="st">"session"</span>)
+<span class="kw">def</span> <span class="fn">playwright</span>(playwright: pw_type):
+    playwright.<span class="op">selectors</span>.<span class="op">set_test_id_attribute</span>(<span class="st">"data-cy"</span>)
+    <span class="kw">yield</span> playwright
+
+<span class="cm"># now get_by_test_id("hero") matches data-cy="hero"</span>
+<span class="cm"># also works with: data-qa, data-automation-id, etc.</span>
+
+<span class="cm"># inline override:</span>
+page.<span class="op">locator</span>(<span class="st">'[data-qa="submit"]'</span>)</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-head"><div class="dot b"></div><h3>Clock / time control</h3></div>
+      <div class="card-body">
+        <div class="snip sync-block"><span class="kw">from</span> datetime <span class="kw">import</span> datetime
+
+<span class="cm"># freeze to fixed point</span>
+page.clock.<span class="op">set_fixed_time</span>(datetime(<span class="cn">2024</span>, <span class="cn">1</span>, <span class="cn">1</span>))
+
+<span class="cm"># install fake timers</span>
+page.clock.<span class="op">install</span>(time=<span class="st">"2024-01-01T10:00"</span>)
+page.clock.<span class="op">fast_forward</span>(<span class="st">"10:00"</span>)   <span class="cm"># advance 10 min</span>
+page.clock.<span class="op">run_for</span>(<span class="cn">1000</span>)           <span class="cm"># run 1s of timers</span>
+page.clock.<span class="op">tick</span>(<span class="cn">5000</span>)              <span class="cm"># tick 5s</span></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-head"><div class="dot y"></div><h3>Global timeout &amp; expect config</h3></div>
+      <div class="card-body">
+        <div class="snip"><span class="cm"># conftest.py — set once for all tests</span>
+<span class="kw">from</span> playwright.sync_api <span class="kw">import</span> expect
+
+<span class="dk">@pytest.fixture</span>(autouse=<span class="cn">True</span>)
+<span class="kw">def</span> <span class="fn">configure_expect</span>():
+    expect.<span class="op">set_options</span>(timeout=<span class="cn">10_000</span>)  <span class="cm"># 10s default</span>
+
+<span class="cm"># per-page default action timeout</span>
+page.<span class="op">set_default_timeout</span>(<span class="cn">15_000</span>)
+
+<span class="cm"># per-page default navigation timeout</span>
+page.<span class="op">set_default_navigation_timeout</span>(<span class="cn">30_000</span>)
+
+<span class="cm"># override per assertion</span>
+<span class="fn">expect</span>(locator).<span class="op">to_be_visible</span>(timeout=<span class="cn">3_000</span>)</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-head"><div class="dot c"></div><h3>Console &amp; error interception</h3></div>
+      <div class="card-body">
+        <div class="snip sync-block"><span class="cm"># collect console messages</span>
+messages = []
+page.<span class="op">on</span>(<span class="st">"console"</span>, <span class="kw">lambda</span> msg: messages.<span class="op">append</span>(msg))
+
+page.<span class="op">goto</span>(<span class="st">"/page"</span>)
+
+<span class="cm"># inspect</span>
+<span class="kw">for</span> msg <span class="kw">in</span> messages:
+    <span class="fn">print</span>(msg.<span class="op">type</span>, msg.<span class="op">text</span>)    <span class="cm"># log/warn/error</span>
+
+<span class="cm"># catch uncaught exceptions</span>
+errors = []
+page.<span class="op">on</span>(<span class="st">"pageerror"</span>, <span class="kw">lambda</span> err: errors.<span class="op">append</span>(err))
+
+<span class="cm"># assert no JS errors occurred</span>
+<span class="kw">assert</span> errors == [], <span class="fn">str</span>(errors[<span class="cn">0</span>])</div>
+        <div class="snip async-block">errors = []
+page.<span class="op">on</span>(<span class="st">"pageerror"</span>, <span class="kw">lambda</span> e: errors.<span class="op">append</span>(e))
+<span class="kw">await</span> page.<span class="op">goto</span>(<span class="st">"/page"</span>)
+<span class="kw">assert</span> errors == []</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-head"><div class="dot r"></div><h3>Retry / flakiness handling</h3></div>
+      <div class="card-body">
+        <div class="snip"><span class="cm"># pytest.ini — retry failed tests</span>
+<span class="cm"># pip install pytest-rerunfailures</span>
+[pytest]
+reruns = 2
+reruns_delay = 1
+
+<span class="cm"># per-test decorator</span>
+<span class="dk">@pytest.mark.flaky</span>(reruns=<span class="cn">3</span>, reruns_delay=<span class="cn">2</span>)
+<span class="kw">def</span> <span class="fn">test_unstable</span>(page): ...
+
+<span class="cm"># built-in: retryable assertions auto-wait</span>
+<span class="cm"># expect() polls until timeout — no explicit retry needed</span>
+<span class="fn">expect</span>(locator).<span class="op">to_have_text</span>(<span class="st">"Loaded"</span>)  <span class="cm"># retries internally</span>
+
+<span class="cm"># avoid fixed waits — let assertions do the waiting:</span>
+<span class="cm"># ✗  page.wait_for_timeout(2000)</span>
+<span class="cm"># ✓  expect(locator).to_be_visible()</span></div>
+        <div class="warn"><strong>Never</strong> use <code>time.sleep()</code>. Playwright's <code>expect()</code> already polls with auto-retry until the timeout.</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-head"><div class="dot g"></div><h3>Accessibility</h3></div>
+      <div class="card-body">
+        <div class="snip sync-block"><span class="kw">from</span> playwright.sync_api <span class="kw">import</span> expect
+
+<span class="cm"># ARIA snapshot assertion</span>
+<span class="fn">expect</span>(page.<span class="op">locator</span>(<span class="st">"nav"</span>)).<span class="op">to_match_aria_snapshot</span>(<span class="st">"""
+  - navigation:
+    - link "Home"
+    - link "Products"
+"""</span>)
+
+<span class="cm"># raw accessibility tree</span>
+snapshot = page.accessibility.<span class="op">snapshot</span>()
+<span class="fn">print</span>(snapshot[<span class="st">"role"</span>], snapshot[<span class="st">"name"</span>])
+
+<span class="cm"># axe-core (3rd-party)</span>
+<span class="cm"># pip install axe-playwright-python</span>
+<span class="kw">from</span> axe_playwright_python.sync_playwright <span class="kw">import</span> Axe
+results = Axe().<span class="op">run</span>(page)
+<span class="fn">print</span>(results.response[<span class="st">"violations"</span>])</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-head"><div class="dot p"></div><h3>Fixture scopes &amp; autouse</h3></div>
+      <div class="card-body">
+        <div class="snip"><span class="cm"># conftest.py</span>
+<span class="kw">import</span> pytest
+<span class="kw">from</span> playwright.sync_api <span class="kw">import</span> Page, BrowserContext
+
+<span class="cm"># session-scoped auth — login once for all tests</span>
+<span class="dk">@pytest.fixture</span>(scope=<span class="st">"session"</span>)
+<span class="kw">def</span> <span class="fn">auth_state</span>(browser):
+    ctx = browser.<span class="op">new_context</span>()
+    page = ctx.<span class="op">new_page</span>()
+    page.<span class="op">goto</span>(<span class="st">"/login"</span>)
+    page.<span class="op">get_by_test_id</span>(<span class="st">"email"</span>).<span class="op">fill</span>(<span class="st">"user@test.com"</span>)
+    page.<span class="op">get_by_test_id</span>(<span class="st">"login-btn"</span>).<span class="op">click</span>()
+    ctx.<span class="op">storage_state</span>(path=<span class="st">"auth.json"</span>)
+    ctx.<span class="op">close</span>()
+
+<span class="cm"># autouse — runs for every test automatically</span>
+<span class="dk">@pytest.fixture</span>(autouse=<span class="cn">True</span>)
+<span class="kw">def</span> <span class="fn">reset_state</span>(page: Page):
+    page.<span class="op">goto</span>(<span class="st">"/reset"</span>)      <span class="cm"># teardown via API, not UI</span>
+    <span class="kw">yield</span>
+    page.<span class="op">evaluate</span>(<span class="st">"localStorage.clear()"</span>)</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-head"><div class="dot b"></div><h3>Async parallelism (asyncio.gather)</h3></div>
+      <div class="card-body">
+        <div class="snip"><span class="kw">import</span> asyncio
+<span class="kw">from</span> playwright.async_api <span class="kw">import</span> async_playwright
+
+<span class="kw">async def</span> <span class="fn">scrape</span>(browser, url):
+    page = <span class="kw">await</span> browser.<span class="op">new_page</span>()
+    <span class="kw">await</span> page.<span class="op">goto</span>(url)
+    title = <span class="kw">await</span> page.<span class="op">title</span>()
+    <span class="kw">await</span> page.<span class="op">close</span>()
+    <span class="kw">return</span> title
+
+<span class="kw">async def</span> <span class="fn">main</span>():
+    <span class="kw">async with</span> <span class="fn">async_playwright</span>() <span class="kw">as</span> p:
+        browser = <span class="kw">await</span> p.chromium.<span class="op">launch</span>()
+        urls = [<span class="st">"/page1"</span>, <span class="st">"/page2"</span>, <span class="st">"/page3"</span>]
+        <span class="cm"># run all pages concurrently</span>
+        titles = <span class="kw">await</span> asyncio.<span class="op">gather</span>(
+            *[<span class="fn">scrape</span>(browser, u) <span class="kw">for</span> u <span class="kw">in</span> urls]
+        )
+        <span class="kw">await</span> browser.<span class="op">close</span>()
+        <span class="kw">return</span> titles
+
+asyncio.<span class="op">run</span>(<span class="fn">main</span>())</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-head"><div class="dot y"></div><h3>Multi-page &amp; multi-context</h3></div>
+      <div class="card-body">
+        <div class="snip sync-block"><span class="cm"># multiple tabs in one context</span>
+page1 = context.<span class="op">new_page</span>()
+page2 = context.<span class="op">new_page</span>()
+
+<span class="cm"># separate sessions (e.g. two users)</span>
+ctx_user1 = browser.<span class="op">new_context</span>(storage_state=<span class="st">"user1.json"</span>)
+ctx_user2 = browser.<span class="op">new_context</span>(storage_state=<span class="st">"user2.json"</span>)
+pg1 = ctx_user1.<span class="op">new_page</span>()
+pg2 = ctx_user2.<span class="op">new_page</span>()
+
+<span class="cm"># list open pages</span>
+pages = context.<span class="op">pages</span>   <span class="cm"># list[Page]</span></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-head"><div class="dot c"></div><h3>Video recording</h3></div>
+      <div class="card-body">
+        <div class="snip sync-block">context = browser.<span class="op">new_context</span>(
+    record_video_dir=<span class="st">"videos/"</span>,
+    record_video_size={<span class="st">"width"</span>: <span class="cn">1280</span>, <span class="st">"height"</span>: <span class="cn">720</span>},
+)
+page = context.<span class="op">new_page</span>()
+page.<span class="op">goto</span>(<span class="st">"https://example.com"</span>)
+
+<span class="cm"># must close context to flush video</span>
+path = page.video.<span class="op">path</span>()
+context.<span class="op">close</span>()    <span class="cm"># saves webm to videos/</span>
+
+<span class="cm"># save to specific path</span>
+page.video.<span class="op">save_as</span>(<span class="st">"my_recording.webm"</span>)</div>
+        <div class="snip async-block">context = <span class="kw">await</span> browser.<span class="op">new_context</span>(
+    record_video_dir=<span class="st">"videos/"</span>,
+)
+page = <span class="kw">await</span> context.<span class="op">new_page</span>()
+<span class="kw">await</span> page.<span class="op">goto</span>(<span class="st">"https://example.com"</span>)
+<span class="kw">await</span> context.<span class="op">close</span>()</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-head"><div class="dot r"></div><h3>Environment-based config</h3></div>
+      <div class="card-body">
+        <div class="snip"><span class="cm"># conftest.py — read from env / .env file</span>
+<span class="kw">import</span> os
+<span class="cm"># pip install python-dotenv</span>
+<span class="kw">from</span> dotenv <span class="kw">import</span> load_dotenv
+<span class="fn">load_dotenv</span>()   <span class="cm"># loads .env into os.environ</span>
+
+BASE_URL  = os.<span class="op">getenv</span>(<span class="st">"BASE_URL"</span>,  <span class="st">"http://localhost:3000"</span>)
+TEST_USER = os.<span class="op">getenv</span>(<span class="st">"TEST_USER"</span>, <span class="st">"admin@test.com"</span>)
+TEST_PASS = os.<span class="op">getenv</span>(<span class="st">"TEST_PASS"</span>, <span class="st">"secret"</span>)
+
+<span class="dk">@pytest.fixture</span>(scope=<span class="st">"session"</span>)
+<span class="kw">def</span> <span class="fn">base_url</span>():
+    <span class="kw">return</span> BASE_URL
+
+<span class="cm"># .env file (never commit secrets!)</span>
+<span class="cm"># BASE_URL=https://staging.example.com</span>
+<span class="cm"># TEST_USER=qa@example.com</span>
+<span class="cm"># TEST_PASS=Pa$$word</span></div>
+        <div class="warn"><strong>Security:</strong> Never commit <code>.env</code> files. Add to <code>.gitignore</code>. Use CI secrets for credentials.</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-head"><div class="dot p"></div><h3>Custom soft-assertion collector</h3></div>
+      <div class="card-body">
+        <div class="snip sync-block"><span class="kw">from</span> playwright.sync_api <span class="kw">import</span> expect
+
+<span class="cm"># soft assertions continue after failure</span>
+<span class="kw">def</span> <span class="fn">test_dashboard</span>(page):
+    page.<span class="op">goto</span>(<span class="st">"/dashboard"</span>)
+
+    <span class="cm"># these won't stop the test</span>
+    <span class="fn">expect</span>.<span class="op">soft</span>(page.<span class="op">get_by_test_id</span>(<span class="st">"title"</span>)).<span class="op">to_have_text</span>(<span class="st">"Dashboard"</span>)
+    <span class="fn">expect</span>.<span class="op">soft</span>(page.<span class="op">get_by_test_id</span>(<span class="st">"user-menu"</span>)).<span class="op">to_be_visible</span>()
+    <span class="fn">expect</span>.<span class="op">soft</span>(page.<span class="op">get_by_test_id</span>(<span class="st">"logout-btn"</span>)).<span class="op">to_be_enabled</span>()
+
+    <span class="cm"># hard assertion at the end flushes soft failures</span>
+    <span class="fn">expect</span>(page).<span class="op">to_have_url</span>(<span class="st">"/dashboard"</span>)</div>
+        <div class="tip"><strong>Pattern:</strong> Use soft assertions for independent checks in one test, then a single hard assertion to fail the test if any soft one failed.</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-head"><div class="dot b"></div><h3>Thread safety note</h3></div>
+      <div class="card-body">
+        <div class="warn"><strong>Important:</strong> Playwright's API is not thread-safe. For multi-threaded use, create one playwright instance per thread.</div>
+        <div class="snip"><span class="kw">from</span> threading <span class="kw">import</span> Thread
+<span class="kw">from</span> playwright.sync_api <span class="kw">import</span> sync_playwright
+
+<span class="kw">def</span> <span class="fn">run_in_thread</span>(url):
+    <span class="kw">with</span> <span class="fn">sync_playwright</span>() <span class="kw">as</span> p:     <span class="cm"># own instance</span>
+        browser = p.chromium.<span class="op">launch</span>()
+        page = browser.<span class="op">new_page</span>()
+        page.<span class="op">goto</span>(url)
+        browser.<span class="op">close</span>()
+
+threads = [Thread(target=<span class="fn">run_in_thread</span>, args=(u,))
+           <span class="kw">for</span> u <span class="kw">in</span> [<span class="st">"/a"</span>, <span class="st">"/b"</span>]]
+<span class="kw">for</span> t <span class="kw">in</span> threads: t.<span class="op">start</span>()
+<span class="kw">for</span> t <span class="kw">in</span> threads: t.<span class="op">join</span>()</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-head"><div class="dot g"></div><h3>Best practices summary</h3></div>
+      <div class="card-body">
+        <table>
+          <tr><th>Topic</th><th>Do ✓</th><th>Avoid ✗</th></tr>
+          <tr><td>Locators</td><td><code>get_by_test_id()</code>, <code>get_by_role()</code></td><td>CSS classes, XPath, <code>.nth()</code></td></tr>
+          <tr><td>Waiting</td><td><code>expect(loc).to_be_visible()</code></td><td><code>time.sleep()</code>, <code>wait_for_timeout()</code></td></tr>
+          <tr><td>Auth</td><td>Reuse <code>storage_state</code> per session</td><td>Log in via UI for every test</td></tr>
+          <tr><td>Isolation</td><td>One context per test user/role</td><td>Sharing state between tests</td></tr>
+          <tr><td>Assertions</td><td><code>expect()</code> with auto-retry</td><td>Manual <code>assert locator.is_visible()</code></td></tr>
+          <tr><td>Secrets</td><td>Env vars / CI secrets</td><td>Hardcoded credentials</td></tr>
+          <tr><td>Parallelism</td><td><code>pytest -n 4</code> or <code>asyncio.gather()</code></td><td>Shared browser across threads</td></tr>
+          <tr><td>Debugging</td><td><code>PWDEBUG=1</code>, <code>page.pause()</code>, traces</td><td>Print statements, manual steps</td></tr>
+        </table>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+function show(id, btn) {
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('nav button').forEach(b => b.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  btn.classList.add('active');
+}
+
+function setMode(mode) {
+  document.body.className = mode + '-mode';
+  document.getElementById('btn-sync').className  = mode === 'sync'  ? 'on' : '';
+  document.getElementById('btn-async').className = mode === 'async' ? 'on' : '';
+}
+</script>
+</body>
+</html>
