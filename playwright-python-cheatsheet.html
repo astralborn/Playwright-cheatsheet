@@ -283,17 +283,17 @@
   <button onclick="show('patterns',this)">Patterns</button>
 </nav>
 
+<div class="mode-bar">
+  <span>API mode:</span>
+  <div class="toggle">
+    <button class="on" id="btn-sync" onclick="setMode('sync')">sync</button>
+    <button id="btn-async" onclick="setMode('async')">async</button>
+  </div>
+  <span style="color:var(--hint);font-size:0.65rem">(toggle affects all code snippets)</span>
+</div>
+
 <!-- ════════════════════════════════════════════════════ SETUP -->
 <div id="setup" class="panel active">
-
-  <div class="mode-bar">
-    <span>API mode:</span>
-    <div class="toggle">
-      <button class="on" id="btn-sync" onclick="setMode('sync')">sync</button>
-      <button id="btn-async" onclick="setMode('async')">async</button>
-    </div>
-    <span style="color:var(--hint);font-size:0.65rem">(toggle affects all code snippets)</span>
-  </div>
 
   <div class="grid">
 
